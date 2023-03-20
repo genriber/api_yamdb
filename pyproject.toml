@@ -4,8 +4,17 @@ include = '\.pyi?$'
 exclude = '''
 /(
     \.git
+  | \.hg
   | \.mypy_cache
+  | \.tox
   | \.venv
-  | \tests
+  | \venv
+  | venv
+  | .venv
+  | _build
+  | buck-out
+  | build
+  | dist
+  | ^.*\b(migrations)\b.*$
 )/
 '''
