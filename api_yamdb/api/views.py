@@ -7,13 +7,14 @@ from rest_framework.permissions import AllowAny, IsAuthenticatedOrReadOnly
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.response import Response
 
-from reviews.models import Category, Genre, Title
+from reviews.models import Category, Comment, Genre, Review, Title
 from .serializers import (
     SingUpSerializer,
     User,
     CategorySerializer,
     GenreSerializer,
     TitleSerializer,
+    ReviewSerializer,
 )
 
 
@@ -77,7 +78,20 @@ class GenreViewSet(viewsets.GenericViewSet):
 class TitleViewSet(viewsets.GenericViewSet):
     """Вьюсет произведений. Права доступа: Доступно без токена"""
 
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [
+        AllowAny,
+    ]
     serializer_class = TitleSerializer
     queryset = Title.objects.all()
+    pagination_class = LimitOffsetPagination
+
+
+class ReviewViewSet(viewsets.GenericViewSet):
+    """Вьюсет отзывов."""
+
+    permission_classes = [
+        AllowAny,
+    ]
+    serializer_class = ReviewSerializer
+    queryset = Review.objects.all()
     pagination_class = LimitOffsetPagination
