@@ -2,6 +2,7 @@ import string
 import random
 
 from django.core.mail import send_mail
+from django.shortcuts import get_object_or_404
 from rest_framework import views, status, viewsets
 from rest_framework.permissions import AllowAny, IsAuthenticatedOrReadOnly
 from rest_framework.pagination import LimitOffsetPagination
@@ -14,6 +15,7 @@ from .serializers import (
     CategorySerializer,
     GenreSerializer,
     TitleSerializer,
+    ReviewSerializer,
     ReviewSerializer,
 )
 
@@ -95,3 +97,8 @@ class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
     queryset = Review.objects.all()
     pagination_class = LimitOffsetPagination
+
+    def get_queryset(self):
+        title_id = self.kwargs.get("title_id")
+        get_object_or_404(Title, pk=title_id)
+        return Review.objects.filter(title=title_id)
