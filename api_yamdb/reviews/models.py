@@ -119,8 +119,6 @@ class Title(models.Model):
     )
     genre = models.ManyToManyField(
         Genre,
-        blank=True,
-        null=True,
         related_name="titles",
     )
     category = models.ForeignKey(
@@ -184,7 +182,7 @@ class Review(models.Model):
                     models.Avg("score")
                 )
             )
-        except:
+        except Exception:
             return 0
 
 
@@ -203,12 +201,12 @@ class Comment(models.Model):
     class Meta:
         verbose_name = "Комментарий"
         verbose_name_plural = "Комментарии"
-        constraints = [
-            models.CheckConstraint(
-                check=~models.Q(author=models.F("review__author")),
-                name="self_commenting_check",
-            )
-        ]
+        # constraints = [
+        # models.CheckConstraint(
+        # check=~models.Q(author=models.F("review__author")),
+        # name="self_commenting_check",
+        # )
+        # ]
 
     def __str__(self):
         return (
