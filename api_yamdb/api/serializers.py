@@ -28,9 +28,6 @@ class TitleSerializer(serializers.ModelSerializer):
     Сериализатор жанров
     """
 
-    # genre = GenreSerializer(read_only=True, many=True)
-    # category = CategorySerializer(read_only=True)
-
     class Meta:
         fields = "__all__"
         model = Title
