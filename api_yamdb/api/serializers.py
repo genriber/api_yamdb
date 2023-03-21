@@ -51,6 +51,30 @@ class ReviewSerializer(serializers.ModelSerializer):
     Сериализатор отзывов
     """
 
+    author = serializers.SlugRelatedField(
+        queryset=User.objects.all(),
+        slug_field="username",
+        read_only=False,
+        required=False,
+    )
+
     class Meta:
         fields = ("id", "text", "author", "score", "pub_date")
         model = Review
+
+
+class CommentSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор комментариев
+    """
+
+    author = serializers.SlugRelatedField(
+        queryset=User.objects.all(),
+        slug_field="username",
+        read_only=False,
+        required=False,
+    )
+
+    class Meta:
+        fields = ("id", "text", "author", "pub_date")
+        model = Comment

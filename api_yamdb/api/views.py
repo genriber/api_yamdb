@@ -10,12 +10,12 @@ from rest_framework.response import Response
 
 from reviews.models import Category, Comment, Genre, Review, Title
 from .serializers import (
+    CommentSerializer,
     SingUpSerializer,
     User,
     CategorySerializer,
     GenreSerializer,
     TitleSerializer,
-    ReviewSerializer,
     ReviewSerializer,
 )
 
@@ -95,10 +95,34 @@ class ReviewViewSet(viewsets.ModelViewSet):
         AllowAny,
     ]
     serializer_class = ReviewSerializer
-    queryset = Review.objects.all()
     pagination_class = LimitOffsetPagination
 
     def get_queryset(self):
         title_id = self.kwargs.get("title_id")
         get_object_or_404(Title, pk=title_id)
         return Review.objects.filter(title=title_id)
+
+    def perform_create(self, serializer):
+        """title = get_object_or_404(Title, id=self.kwargs.get("title_id"))"""
+        serializer.save(author=self.request.user)
+
+
+class CommentViewSet(viewsets.ModelViewSet):
+    """Вьюсет комментов."""
+
+    permission_classes = [
+        AllowAny,
+    ]
+    serializer_class = CommentSerializer
+    pagination_class = LimitOffsetPagination
+
+    def get_queryset(self):
+        title_id = self.kwargs.get("title_id")
+        get_object_or_404(Title, pk=title_id)
+        review_id = self.kwargs.get("review_id")
+        get_object_or_404(Review, pk=review_id)
+        return Comment.objects.filter(review=review_id)
+
+    def perform_create(self, serializer):
+        """title = get_object_or_404(Title, id=self.kwargs.get("title_id"))"""
+        serializer.save(author=self.request.user)
