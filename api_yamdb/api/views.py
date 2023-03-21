@@ -2,11 +2,19 @@ import string
 import random
 
 from django.core.mail import send_mail
-from rest_framework import views, status
+from rest_framework import views, status, viewsets
+from rest_framework.permissions import AllowAny, IsAuthenticatedOrReadOnly
+from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
 
-from .serializers import SingUpSerializer, User
+from reviews.models import Category, Genre, Title
+from .serializers import (
+    SingUpSerializer,
+    User,
+    CategorySerializer,
+    GenreSerializer,
+    TitleSerializer,
+)
 
 
 class SingUpView(views.APIView):
@@ -46,3 +54,30 @@ class SingUpView(views.APIView):
         return Response(
             serializer.error_messages, status=status.HTTP_400_BAD_REQUEST
         )
+
+
+class CategoryViewSet(viewsets.GenericViewSet):
+    """Вьюсет категорий. Права доступа: Доступно без токена"""
+
+    permission_classes = [IsAuthenticatedOrReadOnly]
+    serializer_class = CategorySerializer
+    queryset = Category.objects.all()
+    pagination_class = LimitOffsetPagination
+
+
+class GenreViewSet(viewsets.GenericViewSet):
+    """Вьюсет жанров. Права доступа: Доступно без токена"""
+
+    permission_classes = [IsAuthenticatedOrReadOnly]
+    serializer_class = GenreSerializer
+    queryset = Genre.objects.all()
+    pagination_class = LimitOffsetPagination
+
+
+class TitleViewSet(viewsets.GenericViewSet):
+    """Вьюсет произведений. Права доступа: Доступно без токена"""
+
+    permission_classes = [IsAuthenticatedOrReadOnly]
+    serializer_class = TitleSerializer
+    queryset = Title.objects.all()
+    pagination_class = LimitOffsetPagination
