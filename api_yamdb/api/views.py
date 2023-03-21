@@ -57,7 +57,7 @@ class SingUpView(views.APIView):
         )
 
 
-class CategoryViewSet(viewsets.GenericViewSet):
+class CategoryViewSet(viewsets.ModelViewSet):
     """Вьюсет категорий. Права доступа: Доступно без токена"""
 
     permission_classes = [IsAuthenticatedOrReadOnly]
@@ -66,7 +66,7 @@ class CategoryViewSet(viewsets.GenericViewSet):
     pagination_class = LimitOffsetPagination
 
 
-class GenreViewSet(viewsets.GenericViewSet):
+class GenreViewSet(viewsets.ModelViewSet):
     """Вьюсет жанров. Права доступа: Доступно без токена"""
 
     permission_classes = [IsAuthenticatedOrReadOnly]
@@ -75,7 +75,7 @@ class GenreViewSet(viewsets.GenericViewSet):
     pagination_class = LimitOffsetPagination
 
 
-class TitleViewSet(viewsets.GenericViewSet):
+class TitleViewSet(viewsets.ModelViewSet):
     """Вьюсет произведений. Права доступа: Доступно без токена"""
 
     permission_classes = [
@@ -86,7 +86,7 @@ class TitleViewSet(viewsets.GenericViewSet):
     pagination_class = LimitOffsetPagination
 
 
-class ReviewViewSet(viewsets.GenericViewSet):
+class ReviewViewSet(viewsets.ModelViewSet):
     """Вьюсет отзывов."""
 
     permission_classes = [
