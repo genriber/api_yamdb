@@ -1,15 +1,48 @@
-
 from datetime import date
 
-from django.core.validators import (MaxValueValidator,
-                                    MinValueValidator,
-                                    validate_slug)
-from django.contrib.auth import get_user_model
-from django.db import models
+from django.core.validators import (
+    MaxValueValidator,
+    MinValueValidator,
+    validate_slug,
+)
 from django.shortcuts import get_object_or_404
+from django.contrib.auth.models import AbstractUser
+from django.db import models
+from django.db.models import UniqueConstraint
+
+USER_ROLE_CHOISES = (
+    ("user", "Авторизованный пользователь"),
+    ("moderator", "Модератор"),
+    ("admin", "Администратор"),
+)
 
 
-User = get_user_model()
+class User(AbstractUser):
+    """Кастомный класс модели User"""
+
+    bio = models.TextField(
+        "Биография", blank=True, help_text="Расскажите о себе"
+    )
+    role = models.CharField(
+        "Пользовательская роль",
+        max_length=10,
+        blank=True,
+        choices=USER_ROLE_CHOISES,
+    )
+
+    class Meta:
+        constraints = [
+            UniqueConstraint(
+                fields=["email", "username"],
+                name="unique_pair",
+            ),
+        ]
+        ordering = ["username"]
+        verbose_name = "Пользователь"
+        verbose_name_plural = "Пользователи"
+
+    def __str__(self) -> str:
+        return f"Пользователь {self.username} - {self.role}"
 
 
 class Category(models.Model):
