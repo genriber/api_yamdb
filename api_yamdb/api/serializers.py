@@ -168,10 +168,14 @@ class TitleSerializer(serializers.ModelSerializer):
     genre = TitleGenre(
         slug_field="slug", queryset=Genre.objects.all(), many=True
     )
+    rating = serializers.SerializerMethodField()
 
     class Meta:
         fields = "__all__"
         model = Title
+
+    def get_rating(self, obj):
+        return Review.get_mean_score(obj.pk)
 
 
 class ReviewSerializer(serializers.ModelSerializer):
@@ -182,6 +186,7 @@ class ReviewSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(
         queryset=User.objects.all(),
         slug_field="username",
+        default=serializers.CurrentUserDefault(),
         read_only=False,
         required=False,
     )
