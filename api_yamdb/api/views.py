@@ -189,13 +189,9 @@ class ReviewViewSet(viewsets.ModelViewSet):
     pagination_class = LimitOffsetPagination
 
     def get_queryset(self):
-        # title_id = self.kwargs.get("title_id")
-        # get_object_or_404(Title, pk=title_id)
-
-        ss = get_object_or_404(Title, id=self.kwargs.get("title_id"))
-
-        return ss.reviews.all()
-        # return Review.objects.filter(title=title_id)
+        title_id = self.kwargs.get("title_id")
+        get_object_or_404(Title, pk=title_id)
+        return Review.objects.filter(title=title_id)
 
     def perform_create(self, serializer):
         title = get_object_or_404(Title, id=self.kwargs.get("title_id"))
