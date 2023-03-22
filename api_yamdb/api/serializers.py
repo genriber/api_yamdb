@@ -9,6 +9,8 @@ from reviews.models import User, Category, Genre, Title, models
 
 
 class MyObtainTokenSerializer(serializers.ModelSerializer):
+    """Сериализатор получения токена для зарегистрированного пользователя."""
+
     confirmation_code = serializers.CharField(
         max_length=150, min_length=6, write_only=True, source="password"
     )
@@ -21,6 +23,7 @@ class MyObtainTokenSerializer(serializers.ModelSerializer):
         }
 
     def validate(self, data):
+        """Валидатор для 'username' и 'confirmation_code'."""
         user = get_object_or_404(User, username=data["username"])
         authenticate_kwargs = {
             "username": user.username,
@@ -36,6 +39,8 @@ class MyObtainTokenSerializer(serializers.ModelSerializer):
 
 
 class SingUpSerializer(serializers.ModelSerializer):
+    """Сериализатор регистрации через email"""
+
     class Meta:
         fields = (
             "email",
@@ -55,6 +60,11 @@ class SingUpSerializer(serializers.ModelSerializer):
         return User.objects.get_or_create(**validated_data)
 
     def validate(self, data):
+        """
+        Валидация в 2 этапа:
+         1. Ищем пользователя в базе если находим валидация успешна
+         2. Если пользователя нет проверяем что username и email уникальны
+        """
         try:
             get_object_or_404(
                 User, email=data["email"], username=data["username"]

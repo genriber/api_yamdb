@@ -28,6 +28,7 @@ class ObtainTokenView(views.APIView):
     ]
 
     def post(self, request):
+        """Генерация сучайного confirmation_code"""
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid(raise_exception=True):
             return Response(
