@@ -5,7 +5,15 @@ from django.http import Http404
 from rest_framework import serializers, exceptions
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from reviews.models import User, Category, Genre, Title, models
+from reviews.models import (
+    Comment,
+    User,
+    Category,
+    Genre,
+    Review,
+    Title,
+    models,
+)
 
 
 def validate_uniqe_user_data(data):

@@ -19,7 +19,7 @@ from .serializers import (
     CategorySerializer,
     GenreSerializer,
     TitleSerializer,
-    ReviewSerializer
+    ReviewSerializer,
     MyObtainTokenSerializer,
     AdminCreateSerializer,
 )
@@ -193,8 +193,8 @@ class ReviewViewSet(viewsets.ModelViewSet):
         return Review.objects.filter(title=title_id)
 
     def perform_create(self, serializer):
-        """title = get_object_or_404(Title, id=self.kwargs.get("title_id"))"""
-        serializer.save(author=self.request.user)
+        title = get_object_or_404(Title, id=self.kwargs.get("title_id"))
+        serializer.save(author=self.request.user, title=title)
 
 
 class CommentViewSet(viewsets.ModelViewSet):
@@ -212,5 +212,5 @@ class CommentViewSet(viewsets.ModelViewSet):
         return Comment.objects.filter(review=review_id)
 
     def perform_create(self, serializer):
-        """title = get_object_or_404(Title, id=self.kwargs.get("title_id"))"""
-        serializer.save(author=self.request.user)
+        review = get_object_or_404(Title, id=self.kwargs.get("review_id"))
+        serializer.save(author=self.request.user, review=review)
