@@ -8,11 +8,21 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from reviews.models import User, Category, Genre, Title, models
 
 
+def validate_uniqe_user_data(data):
+    queryset = User.objects.filter(
+        models.Q(email=data["email"]) | models.Q(username=data["username"])
+    )
+    if queryset.exists():
+        raise serializers.ValidationError(
+            "Имя и email должны быть уникальными!"
+        )
+
+
 class MyObtainTokenSerializer(serializers.ModelSerializer):
     """Сериализатор получения токена для зарегистрированного пользователя."""
 
     confirmation_code = serializers.CharField(
-        max_length=150, min_length=6, write_only=True, source="password"
+        max_length=150, min_length=4, write_only=True, source="password"
     )
 
     class Meta:
@@ -70,16 +80,40 @@ class SingUpSerializer(serializers.ModelSerializer):
                 User, email=data["email"], username=data["username"]
             )
         except Http404:
-            queryset = User.objects.filter(
-                models.Q(email=data["email"])
-                | models.Q(username=data["username"])
-            )
-            if queryset.exists():
-                raise serializers.ValidationError(
-                    "Имя и email должны быть уникальными!"
-                )
-
+            validate_uniqe_user_data(data)
         return data
+
+
+class AdminCreateSerializer(serializers.ModelSerializer):
+    """Сериализатор регистрации пользователей админом"""
+
+    class Meta:
+        fields = (
+            "email",
+            "username",
+            "first_name",
+            "last_name",
+            "bio",
+            "role",
+        )
+        extra_kwargs = {
+            "email": {"required": True},
+            "username": {
+                "required": True,
+                "validators": [UnicodeUsernameValidator()],
+            },
+        }
+        model = User
+
+    def create(self, validated_data):
+        if validated_data.get("role") is None:
+            validated_data["role"] = "user"
+        return super().create(validated_data)
+
+    def validate(self, data):
+        validate_uniqe_user_data(data)
+
+        return super().validate(data)
 
 
 class CategorySerializer(serializers.ModelSerializer):

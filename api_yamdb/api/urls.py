@@ -7,6 +7,7 @@ from .views import (
     GenreViewSet,
     TitleViewSet,
     ObtainTokenView,
+    UsersListView,
 )
 
 app_name = "api"
@@ -15,6 +16,7 @@ router = DefaultRouter()
 router.register(r"categories", CategoryViewSet)
 router.register(r"genres", GenreViewSet)
 router.register(r"titles", TitleViewSet)
+router.register(r"users", UsersListView)
 
 urlpatterns = [
     path("v1/auth/signup/", SingUpView.as_view(), name="singup"),
