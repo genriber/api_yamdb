@@ -11,6 +11,8 @@ exclude = '''
   | \venv
   | venv
   | .venv
+  | test
+  | \test
   | _build
   | buck-out
   | build

@@ -181,9 +181,6 @@ class TitleViewSet(viewsets.ModelViewSet):
 class ReviewViewSet(viewsets.ModelViewSet):
     """Вьюсет отзывов."""
 
-    permission_classes = [
-        AllowAny,
-    ]
     serializer_class = ReviewSerializer
     pagination_class = LimitOffsetPagination
 
@@ -200,17 +197,16 @@ class ReviewViewSet(viewsets.ModelViewSet):
 class CommentViewSet(viewsets.ModelViewSet):
     """Вьюсет комментов."""
 
-    permission_classes = [IsAdminOrModeratorOrReadOnly, IsAuthorOrReadOnly]
     serializer_class = CommentSerializer
     pagination_class = LimitOffsetPagination
 
     def get_queryset(self):
         title_id = self.kwargs.get("title_id")
-        get_object_or_404(Title, pk=title_id)
         review_id = self.kwargs.get("review_id")
+        get_object_or_404(Title, pk=title_id)
         get_object_or_404(Review, pk=review_id)
         return Comment.objects.filter(review=review_id)
 
     def perform_create(self, serializer):
-        review = get_object_or_404(Title, id=self.kwargs.get("review_id"))
+        review = get_object_or_404(Review, id=self.kwargs.get("review_id"))
         serializer.save(author=self.request.user, review=review)

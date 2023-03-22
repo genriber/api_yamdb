@@ -168,10 +168,14 @@ class TitleSerializer(serializers.ModelSerializer):
     genre = TitleGenre(
         slug_field="slug", queryset=Genre.objects.all(), many=True
     )
+    rating = serializers.SerializerMethodField()
 
     class Meta:
         fields = "__all__"
         model = Title
+
+    def get_rating(self, obj):
+        return Review.get_mean_score(obj.pk)
 
 
 class ReviewSerializer(serializers.ModelSerializer):
@@ -182,13 +186,26 @@ class ReviewSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(
         queryset=User.objects.all(),
         slug_field="username",
+        default=serializers.CurrentUserDefault(),
         read_only=False,
         required=False,
     )
+    title = serializers.HiddenField(default=None)
+
+    def validate_title(self, value):
+        title_id = self.context["view"].kwargs["title_id"]
+        return get_object_or_404(Title, pk=title_id)
 
     class Meta:
-        fields = ("id", "text", "author", "score", "pub_date")
+        fields = ("id", "text", "author", "score", "pub_date", "title")
         model = Review
+        validators = [
+            serializers.UniqueTogetherValidator(
+                queryset=Review.objects.all(),
+                fields=("author", "title"),
+                message="Вы не можете дважды комментировать одно произведение",
+            )
+        ]
 
 
 class CommentSerializer(serializers.ModelSerializer):
