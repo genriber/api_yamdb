@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from reviews.models import User, Category, Genre, Title, Review, Comment
+from reviews.models import User, Category, Comment, Genre, Review, Title
 
 
 class SingUpSerializer(serializers.ModelSerializer):
@@ -68,27 +68,33 @@ class TitleSerializer(serializers.ModelSerializer):
 
 class ReviewSerializer(serializers.ModelSerializer):
     """
-    Сериализатор жанров
+    Сериализатор отзывов
     """
 
     author = serializers.SlugRelatedField(
-        read_only=True, slug_field="username"
+        queryset=User.objects.all(),
+        slug_field="username",
+        read_only=False,
+        required=False,
     )
 
     class Meta:
-        fields = "__all__"
+        fields = ("id", "text", "author", "score", "pub_date")
         model = Review
 
 
 class CommentSerializer(serializers.ModelSerializer):
     """
-    Сериализатор жанров
+    Сериализатор комментариев
     """
 
     author = serializers.SlugRelatedField(
-        read_only=True, slug_field="username"
+        queryset=User.objects.all(),
+        slug_field="username",
+        read_only=False,
+        required=False,
     )
 
     class Meta:
-        fields = "__all__"
+        fields = ("id", "text", "author", "pub_date")
         model = Comment

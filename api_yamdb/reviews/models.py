@@ -8,7 +8,6 @@ from django.core.validators import (
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from django.db.models import UniqueConstraint
 
 USER_ROLE_CHOISES = (
     ("user", "Авторизованный пользователь"),
@@ -32,7 +31,7 @@ class User(AbstractUser):
 
     class Meta:
         constraints = [
-            UniqueConstraint(
+            models.UniqueConstraint(
                 fields=["email", "username"],
                 name="unique_pair",
             ),
@@ -200,15 +199,9 @@ class Comment(models.Model):
     class Meta:
         verbose_name = "Комментарий"
         verbose_name_plural = "Комментарии"
-        # constraints = [
-        # models.CheckConstraint(
-        # check=~models.Q(author=models.F("review__author")),
-        # name="self_commenting_check",
-        # )
-        # ]
 
     def __str__(self):
         return (
             f"Комментарий {self.author.username} на "
-            f"отзыв {self.review.author.name}"
+            f"отзыв {self.review.author.username}"
         )
