@@ -111,10 +111,7 @@ class Title(models.Model):
             ),
         ],
     )
-    genre = models.ManyToManyField(
-        Genre,
-        related_name="titles",
-    )
+    genre = models.ManyToManyField(Genre, related_name="titles")
     category = models.ForeignKey(
         Category,
         on_delete=models.SET_NULL,
@@ -134,6 +131,11 @@ class Title(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class GenreTitle(models.Model):
+    genre = models.ForeignKey(Genre, on_delete=models.CASCADE)
+    title = models.ForeignKey(Title, on_delete=models.CASCADE)
 
 
 class Review(models.Model):
