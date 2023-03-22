@@ -22,7 +22,7 @@ class CategorySerializer(serializers.ModelSerializer):
     """
 
     class Meta:
-        fields = "__all__"
+        exclude = ["id"]
         model = Category
 
 
@@ -32,14 +32,34 @@ class GenreSerializer(serializers.ModelSerializer):
     """
 
     class Meta:
-        fields = "__all__"
+        exclude = ["id"]
         model = Genre
+
+
+class TitleCategory(serializers.SlugRelatedField):
+    def to_representation(self, value):
+        serializer = CategorySerializer(value)
+        return serializer.data
+
+
+class TitleGenre(serializers.SlugRelatedField):
+    def to_representation(self, value):
+        serializer = GenreSerializer(value)
+        return serializer.data
 
 
 class TitleSerializer(serializers.ModelSerializer):
     """
     Сериализатор жанров
     """
+
+    category = TitleCategory(
+        slug_field="slug",
+        queryset=Category.objects.all(),
+    )
+    genre = TitleGenre(
+        slug_field="slug", queryset=Genre.objects.all(), many=True
+    )
 
     class Meta:
         fields = "__all__"

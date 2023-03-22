@@ -57,7 +57,6 @@ class Category(models.Model):
     slug = models.SlugField(
         "Слаг категории",
         unique=True,
-        max_length=50,
         validators=[validate_slug],
     )
 
@@ -81,7 +80,7 @@ class Genre(models.Model):
         max_length=256,
     )
     slug = models.SlugField(
-        "Слаг жанра", unique=True, max_length=50, validators=[validate_slug]
+        "Слаг жанра", unique=True, validators=[validate_slug]
     )
 
     class Meta:
@@ -112,10 +111,6 @@ class Title(models.Model):
             ),
         ],
     )
-    description = models.TextField(
-        "Описание",
-        blank=True,
-    )
     genre = models.ManyToManyField(
         Genre,
         related_name="titles",
@@ -126,6 +121,10 @@ class Title(models.Model):
         blank=True,
         null=True,
         related_name="titles",
+    )
+    description = models.TextField(
+        "Описание",
+        blank=True,
     )
 
     class Meta:
