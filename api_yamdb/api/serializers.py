@@ -185,10 +185,22 @@ class ReviewSerializer(serializers.ModelSerializer):
         read_only=False,
         required=False,
     )
+    title = serializers.HiddenField(default=None)
+
+    def validate_title(self, value):
+        title_id = self.context["view"].kwargs["title_id"]
+        return get_object_or_404(Title, pk=title_id)
 
     class Meta:
-        fields = ("id", "text", "author", "score", "pub_date")
+        fields = ("id", "text", "author", "score", "pub_date", "title")
         model = Review
+        validators = [
+            serializers.UniqueTogetherValidator(
+                queryset=Review.objects.all(),
+                fields=("author", "title"),
+                message="Вы не можете дважды комментировать одно произведение",
+            )
+        ]
 
 
 class CommentSerializer(serializers.ModelSerializer):

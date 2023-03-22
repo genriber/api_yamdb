@@ -174,16 +174,12 @@ class Review(models.Model):
             f"Отзыв {self.author.username} на произведение {self.title.name}"
         )
 
-    def get_mean_score(self, title_id):
+    def get_mean_score(title_id):
         title = get_object_or_404(Title, pk=title_id)
-        try:
-            return round(
-                Review.objects.filter(title=title).aggregate(
-                    models.Avg("score")
-                )
-            )
-        except Exception:
-            return 0
+        score_avg = Review.objects.filter(title=title).aggregate(
+            models.Avg("score")
+        )["score__avg"]
+        return round(score_avg) if score_avg else 0
 
 
 class Comment(models.Model):

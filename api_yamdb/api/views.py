@@ -181,9 +181,7 @@ class TitleViewSet(viewsets.ModelViewSet):
 class ReviewViewSet(viewsets.ModelViewSet):
     """Вьюсет отзывов."""
 
-    permission_classes = [
-        AllowAny,
-    ]
+    permission_classes = [IsAdminOrModeratorOrReadOnly, IsAuthorOrReadOnly]
     serializer_class = ReviewSerializer
     pagination_class = LimitOffsetPagination
 
