@@ -2,18 +2,21 @@ import string
 import random
 
 from django.core.mail import send_mail
+from django.shortcuts import get_object_or_404
 from rest_framework import views, status, viewsets
 from rest_framework.permissions import AllowAny, IsAuthenticatedOrReadOnly
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.response import Response
 
-from reviews.models import Category, Genre, Title
+from reviews.models import Category, Comment, Genre, Review, Title
 from .serializers import (
+    CommentSerializer,
     SingUpSerializer,
     User,
     CategorySerializer,
     GenreSerializer,
     TitleSerializer,
+    ReviewSerializer,
 )
 
 
@@ -56,7 +59,7 @@ class SingUpView(views.APIView):
         )
 
 
-class CategoryViewSet(viewsets.GenericViewSet):
+class CategoryViewSet(viewsets.ModelViewSet):
     """Вьюсет категорий. Права доступа: Доступно без токена"""
 
     permission_classes = [IsAuthenticatedOrReadOnly]
@@ -65,7 +68,7 @@ class CategoryViewSet(viewsets.GenericViewSet):
     pagination_class = LimitOffsetPagination
 
 
-class GenreViewSet(viewsets.GenericViewSet):
+class GenreViewSet(viewsets.ModelViewSet):
     """Вьюсет жанров. Права доступа: Доступно без токена"""
 
     permission_classes = [IsAuthenticatedOrReadOnly]
@@ -74,10 +77,52 @@ class GenreViewSet(viewsets.GenericViewSet):
     pagination_class = LimitOffsetPagination
 
 
-class TitleViewSet(viewsets.GenericViewSet):
+class TitleViewSet(viewsets.ModelViewSet):
     """Вьюсет произведений. Права доступа: Доступно без токена"""
 
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [
+        AllowAny,
+    ]
     serializer_class = TitleSerializer
     queryset = Title.objects.all()
     pagination_class = LimitOffsetPagination
+
+
+class ReviewViewSet(viewsets.ModelViewSet):
+    """Вьюсет отзывов."""
+
+    permission_classes = [
+        AllowAny,
+    ]
+    serializer_class = ReviewSerializer
+    pagination_class = LimitOffsetPagination
+
+    def get_queryset(self):
+        title_id = self.kwargs.get("title_id")
+        get_object_or_404(Title, pk=title_id)
+        return Review.objects.filter(title=title_id)
+
+    def perform_create(self, serializer):
+        """title = get_object_or_404(Title, id=self.kwargs.get("title_id"))"""
+        serializer.save(author=self.request.user)
+
+
+class CommentViewSet(viewsets.ModelViewSet):
+    """Вьюсет комментов."""
+
+    permission_classes = [
+        AllowAny,
+    ]
+    serializer_class = CommentSerializer
+    pagination_class = LimitOffsetPagination
+
+    def get_queryset(self):
+        title_id = self.kwargs.get("title_id")
+        get_object_or_404(Title, pk=title_id)
+        review_id = self.kwargs.get("review_id")
+        get_object_or_404(Review, pk=review_id)
+        return Comment.objects.filter(review=review_id)
+
+    def perform_create(self, serializer):
+        """title = get_object_or_404(Title, id=self.kwargs.get("title_id"))"""
+        serializer.save(author=self.request.user)
