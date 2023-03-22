@@ -8,7 +8,6 @@ from django.core.validators import (
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from django.db.models import UniqueConstraint
 
 USER_ROLE_CHOISES = (
     ("user", "Авторизованный пользователь"),
@@ -32,7 +31,7 @@ class User(AbstractUser):
 
     class Meta:
         constraints = [
-            UniqueConstraint(
+            models.UniqueConstraint(
                 fields=["email", "username"],
                 name="unique_pair",
             ),
@@ -58,7 +57,6 @@ class Category(models.Model):
     slug = models.SlugField(
         "Слаг категории",
         unique=True,
-        max_length=50,
         validators=[validate_slug],
     )
 
@@ -82,7 +80,7 @@ class Genre(models.Model):
         max_length=256,
     )
     slug = models.SlugField(
-        "Слаг жанра", unique=True, max_length=50, validators=[validate_slug]
+        "Слаг жанра", unique=True, validators=[validate_slug]
     )
 
     class Meta:
@@ -113,20 +111,17 @@ class Title(models.Model):
             ),
         ],
     )
-    description = models.TextField(
-        "Описание",
-        blank=True,
-    )
-    genre = models.ManyToManyField(
-        Genre,
-        related_name="titles",
-    )
+    genre = models.ManyToManyField(Genre, related_name="titles")
     category = models.ForeignKey(
         Category,
         on_delete=models.SET_NULL,
         blank=True,
         null=True,
         related_name="titles",
+    )
+    description = models.TextField(
+        "Описание",
+        blank=True,
     )
 
     class Meta:
@@ -136,6 +131,11 @@ class Title(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class GenreTitle(models.Model):
+    genre = models.ForeignKey(Genre, on_delete=models.CASCADE)
+    title = models.ForeignKey(Title, on_delete=models.CASCADE)
 
 
 class Review(models.Model):
@@ -201,15 +201,9 @@ class Comment(models.Model):
     class Meta:
         verbose_name = "Комментарий"
         verbose_name_plural = "Комментарии"
-        # constraints = [
-        # models.CheckConstraint(
-        # check=~models.Q(author=models.F("review__author")),
-        # name="self_commenting_check",
-        # )
-        # ]
 
     def __str__(self):
         return (
             f"Комментарий {self.author.username} на "
-            f"отзыв {self.review.author.name}"
+            f"отзыв {self.review.author.username}"
         )

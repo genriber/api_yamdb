@@ -2,22 +2,33 @@ import string
 import random
 
 from django.core.mail import send_mail
-from rest_framework import views, status, viewsets, generics
+from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import views, status, viewsets, filters, generics
+from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticatedOrReadOnly
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
 
-from reviews.models import Category, Genre, Title
+from reviews.models import Category, Genre, Title, Review, Comment
 from .serializers import (
+    CommentSerializer,
     SingUpSerializer,
     User,
     CategorySerializer,
     GenreSerializer,
     TitleSerializer,
+    ReviewSerializer
     MyObtainTokenSerializer,
     AdminCreateSerializer,
 )
+from .permissions import (
+    IsAuthorOrReadOnly,
+    IsAdminOrReadOnly,
+    IsAdminOrModeratorOrReadOnly,
+)
+from .filters import TitleFilter
 
 
 class ObtainTokenView(views.APIView):
@@ -97,28 +108,109 @@ class UsersListView(generics.ListCreateAPIView, viewsets.GenericViewSet):
     pagination_class = LimitOffsetPagination
 
 
-class CategoryViewSet(viewsets.GenericViewSet):
-    """Вьюсет категорий. Права доступа: Доступно без токена"""
+class CategoryViewSet(viewsets.ModelViewSet):
+    """
+    Вьюсет категорий
+    Права доступа: Доступно без токена
+    """
 
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAdminOrReadOnly]
     serializer_class = CategorySerializer
     queryset = Category.objects.all()
     pagination_class = LimitOffsetPagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ["name", "slug"]
+
+    @action(
+        detail=False,
+        methods=["delete"],
+        url_path=r"(?P<slug>\w+)",
+        lookup_field="slug",
+        url_name="category_slug",
+    )
+    def get_category_for_delete(self, request, slug):
+        queryset = Category.objects.all()
+        category = get_object_or_404(queryset, slug=slug)
+        serializer = CategorySerializer(category)
+        category.delete()
+        return Response(serializer.data, status=status.HTTP_204_NO_CONTENT)
 
 
-class GenreViewSet(viewsets.GenericViewSet):
-    """Вьюсет жанров. Права доступа: Доступно без токена"""
+class GenreViewSet(viewsets.ModelViewSet):
+    """
+    Вьюсет жанров
+    Права доступа: Доступно без токена
+    """
 
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAdminOrReadOnly]
     serializer_class = GenreSerializer
     queryset = Genre.objects.all()
     pagination_class = LimitOffsetPagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ["name", "slug"]
+
+    @action(
+        detail=False,
+        methods=["delete"],
+        url_path=r"(?P<slug>\w+)",
+        lookup_field="slug",
+        url_name="genre_slug",
+    )
+    def get_genre_for_delete(self, request, slug):
+        queryset = Genre.objects.all()
+        genre = get_object_or_404(queryset, slug=slug)
+        serializer = GenreSerializer(genre)
+        genre.delete()
+        return Response(serializer.data, status=status.HTTP_204_NO_CONTENT)
 
 
-class TitleViewSet(viewsets.GenericViewSet):
-    """Вьюсет произведений. Права доступа: Доступно без токена"""
+class TitleViewSet(viewsets.ModelViewSet):
+    """
+    Вьюсет произведений
+    Права доступа: Доступно без токена
+    """
 
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAdminOrReadOnly]
     serializer_class = TitleSerializer
     queryset = Title.objects.all()
     pagination_class = LimitOffsetPagination
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = TitleFilter
+
+
+class ReviewViewSet(viewsets.ModelViewSet):
+    """Вьюсет отзывов."""
+
+    permission_classes = [
+        AllowAny,
+    ]
+    serializer_class = ReviewSerializer
+    pagination_class = LimitOffsetPagination
+
+    def get_queryset(self):
+        title_id = self.kwargs.get("title_id")
+        get_object_or_404(Title, pk=title_id)
+        return Review.objects.filter(title=title_id)
+
+    def perform_create(self, serializer):
+        """title = get_object_or_404(Title, id=self.kwargs.get("title_id"))"""
+        serializer.save(author=self.request.user)
+
+
+class CommentViewSet(viewsets.ModelViewSet):
+    """Вьюсет комментов."""
+
+    permission_classes = [IsAdminOrModeratorOrReadOnly, IsAuthorOrReadOnly]
+    serializer_class = CommentSerializer
+    pagination_class = LimitOffsetPagination
+
+    def get_queryset(self):
+        title_id = self.kwargs.get("title_id")
+        get_object_or_404(Title, pk=title_id)
+        review_id = self.kwargs.get("review_id")
+        get_object_or_404(Review, pk=review_id)
+        return Comment.objects.filter(review=review_id)
+
+    def perform_create(self, serializer):
+        """title = get_object_or_404(Title, id=self.kwargs.get("title_id"))"""
+        serializer.save(author=self.request.user)
