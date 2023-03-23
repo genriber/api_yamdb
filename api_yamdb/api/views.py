@@ -28,7 +28,9 @@ from .permissions import (
     AdminOnly,
     IsAuthorOrReadOnly,
     IsAdminOrReadOnly,
+    AdminOnly,
     IsAdminOrModeratorOrReadOnly,
+    IsAdOrModOrAuthorOrReadOnly,
 )
 from .filters import TitleFilter
 
@@ -201,6 +203,8 @@ class TitleViewSet(viewsets.ModelViewSet):
 class ReviewViewSet(viewsets.ModelViewSet):
     """Вьюсет отзывов."""
 
+    # permission_classes = [IsAdminOrModeratorOrReadOnly, IsAuthorOrReadOnly]
+    permission_classes = [IsAdOrModOrAuthorOrReadOnly]
     serializer_class = ReviewSerializer
     pagination_class = LimitOffsetPagination
 
@@ -217,6 +221,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
 class CommentViewSet(viewsets.ModelViewSet):
     """Вьюсет комментов."""
 
+    permission_classes = [IsAdOrModOrAuthorOrReadOnly]
     serializer_class = CommentSerializer
     pagination_class = LimitOffsetPagination
 
