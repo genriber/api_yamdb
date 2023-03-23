@@ -9,14 +9,14 @@ from .views import (
     ReviewViewSet,
     TitleViewSet,
     ObtainTokenView,
-    UsersListView,
+    UsersListViewSet,
 )
 
 app_name = "api"
 
 router = DefaultRouter()
 
-router.register(r"users", UsersListView)
+router.register("users", UsersListViewSet)
 router.register("categories", CategoryViewSet)
 router.register("genres", GenreViewSet)
 router.register("titles", TitleViewSet)

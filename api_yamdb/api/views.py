@@ -24,6 +24,7 @@ from .serializers import (
     AdminCreateSerializer,
 )
 from .permissions import (
+    AdminOnly,
     IsAuthorOrReadOnly,
     IsAdminOrReadOnly,
     IsAdminOrModeratorOrReadOnly,
@@ -96,15 +97,17 @@ class SingUpView(views.APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class UsersListView(generics.ListCreateAPIView, viewsets.GenericViewSet):
-    """Вьюсет пользовательй доступен только админам"""
+class UsersListViewSet(viewsets.ModelViewSet):
+    """Вьюсет пользователей доступен только админам"""
 
-    # TO DO: AdminOnly
     permission_classes = [
-        AllowAny,
+        AdminOnly,
     ]
-    serializer_class = AdminCreateSerializer
     queryset = User.objects.all()
+    serializer_class = AdminCreateSerializer
+    lookup_field = "username"
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ("username",)
     pagination_class = LimitOffsetPagination
 
 

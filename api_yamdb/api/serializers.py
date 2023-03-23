@@ -18,7 +18,8 @@ from reviews.models import (
 
 def validate_uniqe_user_data(data):
     queryset = User.objects.filter(
-        models.Q(email=data["email"]) | models.Q(username=data["username"])
+        models.Q(email=data.get("email", ""))
+        | models.Q(username=data.get("username"))
     )
     if queryset.exists():
         raise serializers.ValidationError(
