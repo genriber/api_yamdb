@@ -4,7 +4,7 @@
 
 ### **Проект выполнен в рамках обучения в YandexPracticum.**
 
-REST Like Backend проекта сбора отзывов выполнен согласно представленной в ТЗ документации, оформленой по стандартам OpenAPI в виде ReDoc веб станицы. Для соблюдения принципов DRY и SOLID в разработке используются Rest_framework ViewSet, Generics, Mixins. Для авторизации применяются JWT токены.
+REST Like Backend проекта сбора отзывов выполнен согласно представленной в ТЗ документации, оформленой по стандартам OpenAPI в виде [ReDoc](https://github.com/genriber/api_yamdb/blob/master/api_yamdb/static/redoc.yaml) веб станицы. Для соблюдения принципов DRY и SOLID в разработке используются Rest_framework ViewSet, Generics, Mixins. Для авторизации применяются JWT токены.
 
 ### Как запустить проект:
 
