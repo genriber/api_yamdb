@@ -17,6 +17,9 @@ from reviews.models import (
 
 
 def validate_uniqe_user_data(data):
+    """
+    Валидатор уникальности полей 'username' и 'email'
+    """
     queryset = User.objects.filter(
         models.Q(email=data.get("email", ""))
         | models.Q(username=data.get("username"))
@@ -60,7 +63,7 @@ class MyObtainTokenSerializer(serializers.ModelSerializer):
 
 
 class SingUpSerializer(serializers.ModelSerializer):
-    """Сериализатор регистрации через email"""
+    """Сериализатор регистрации через email."""
 
     class Meta:
         fields = (
@@ -77,14 +80,14 @@ class SingUpSerializer(serializers.ModelSerializer):
         model = User
 
     def create(self, validated_data):
-        """Если пользователь уже создан взять существующего"""
+        """Если пользователь уже создан взять существующего."""
         return User.objects.get_or_create(**validated_data)
 
     def validate(self, data):
         """
         Валидация в 2 этапа:
-         1. Ищем пользователя в базе если находим валидация успешна
-         2. Если пользователя нет проверяем что username и email уникальны
+         1. Ищем пользователя в базе если находим валидация успешна.
+         2. Если пользователя нет проверяем что username и email уникальны.
         """
         try:
             get_object_or_404(
@@ -117,11 +120,18 @@ class AdminCreateSerializer(serializers.ModelSerializer):
         model = User
 
     def create(self, validated_data):
+        """
+        Создание объекта User роль по-умолчанию 'user'.
+        """
         if validated_data.get("role") is None:
             validated_data["role"] = "user"
+
         return super().create(validated_data)
 
     def validate(self, data):
+        """
+        Валидатор данных сериализатора.
+        """
         validate_uniqe_user_data(data)
 
         return super().validate(data)

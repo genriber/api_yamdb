@@ -26,10 +26,8 @@ from .serializers import (
 )
 from .permissions import (
     AdminOnly,
-    IsAuthorOrReadOnly,
     IsAdminOrReadOnly,
     AdminOnly,
-    IsAdminOrModeratorOrReadOnly,
     IsAdOrModOrAuthorOrReadOnly,
 )
 from .filters import TitleFilter
@@ -44,7 +42,7 @@ class ObtainTokenView(views.APIView):
     ]
 
     def post(self, request):
-        """Генерация сучайного confirmation_code"""
+        """Обработка post запроса на получение токена."""
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid(raise_exception=True):
             return Response(
@@ -127,6 +125,7 @@ class UserMeApiView(generics.RetrieveAPIView, generics.UpdateAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_object(self):
+        """Получения объекта из запроса"""
         return self.request.user
 
 
