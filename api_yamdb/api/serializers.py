@@ -160,7 +160,8 @@ class ProfileSerializer(serializers.ModelSerializer):
 
 class CategorySerializer(serializers.ModelSerializer):
     """
-    Сериализатор категорий
+    Сериализатор категорий.
+    Исключает поле id при выдаче.
     """
 
     class Meta:
@@ -170,7 +171,8 @@ class CategorySerializer(serializers.ModelSerializer):
 
 class GenreSerializer(serializers.ModelSerializer):
     """
-    Сериализатор жанров
+    Сериализатор жанров.
+    Исключает поле id при выдаче.
     """
 
     class Meta:
@@ -179,12 +181,20 @@ class GenreSerializer(serializers.ModelSerializer):
 
 
 class TitleCategory(serializers.SlugRelatedField):
+    """
+    Возвращает сериализованные данные поля category.
+    """
+
     def to_representation(self, value):
         serializer = CategorySerializer(value)
         return serializer.data
 
 
 class TitleGenre(serializers.SlugRelatedField):
+    """
+    Возвращает сериализованные данные поля genre.
+    """
+
     def to_representation(self, value):
         serializer = GenreSerializer(value)
         return serializer.data
@@ -192,7 +202,7 @@ class TitleGenre(serializers.SlugRelatedField):
 
 class TitleSerializer(serializers.ModelSerializer):
     """
-    Сериализатор жанров
+    Сериализатор произведений.
     """
 
     category = TitleCategory(

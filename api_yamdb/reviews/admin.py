@@ -3,6 +3,10 @@ from .models import User, Category, Genre, Title, Review, Comment, GenreTitle
 
 
 class CategoryAdmin(admin.ModelAdmin):
+    """
+    Админ-модель для модели Category.
+    """
+
     list_display = ("id", "name", "slug")
     search_fields = ("name",)
     list_filter = ("name",)
@@ -10,6 +14,10 @@ class CategoryAdmin(admin.ModelAdmin):
 
 
 class GenreAdmin(admin.ModelAdmin):
+    """
+    Админ-модель для модели Genre.
+    """
+
     list_display = ("id", "name", "slug")
     search_fields = ("name",)
     list_filter = ("name",)
@@ -17,11 +25,20 @@ class GenreAdmin(admin.ModelAdmin):
 
 
 class GenreInline(admin.TabularInline):
+    """
+    Инлайн для отображения ManyToMany поля genre в админ-модели Title.
+    """
+
     model = GenreTitle
     extra = 1
 
 
 class TitleAdmin(admin.ModelAdmin):
+    """
+    Админ-модель для модели Title.
+        Выполнена настройка для корректного отображения поля genre.
+    """
+
     inlines = [GenreInline]
     list_display = ("id", "category", "name", "year", "description")
     search_fields = ("name",)
@@ -31,6 +48,10 @@ class TitleAdmin(admin.ModelAdmin):
 
 
 class ReviewAdmin(admin.ModelAdmin):
+    """
+    Админ-модель для модели Review.
+    """
+
     list_display = ("id", "title", "author", "text", "score", "pub_date")
     search_fields = ("title",)
     list_filter = ("title", "author", "score", "pub_date")
@@ -38,6 +59,10 @@ class ReviewAdmin(admin.ModelAdmin):
 
 
 class CommentAdmin(admin.ModelAdmin):
+    """
+    Админ-модель для модели Comment.
+    """
+
     list_display = ("id", "author", "review", "text", "pub_date")
     search_fields = ("author",)
     list_filter = ("author", "text", "pub_date")
