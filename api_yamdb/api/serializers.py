@@ -237,7 +237,10 @@ class ReviewSerializer(serializers.ModelSerializer):
     title = serializers.HiddenField(default=None)
 
     def validate_title(self, value):
-        """Получаем доступ к переданному в url title_id для дальнейшей валидации."""
+        """
+        Получаем доступ к переданному в url title_id
+        для дальнейшей валидации.
+        """
         title_id = self.context["view"].kwargs["title_id"]
         return get_object_or_404(Title, pk=title_id)
 
