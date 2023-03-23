@@ -6,7 +6,7 @@ from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import views, status, viewsets, filters, generics
 from rest_framework.decorators import action
-from rest_framework.permissions import AllowAny, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
@@ -22,6 +22,7 @@ from .serializers import (
     ReviewSerializer,
     MyObtainTokenSerializer,
     AdminCreateSerializer,
+    ProfileSerializer,
 )
 from .permissions import (
     AdminOnly,
@@ -105,10 +106,26 @@ class UsersListViewSet(viewsets.ModelViewSet):
     ]
     queryset = User.objects.all()
     serializer_class = AdminCreateSerializer
+    http_method_names = [
+        "get",
+        "post",
+        "patch",
+        "delete",
+    ]
     lookup_field = "username"
     filter_backends = (filters.SearchFilter,)
     search_fields = ("username",)
     pagination_class = LimitOffsetPagination
+
+
+class UserMeApiView(generics.RetrieveAPIView, generics.UpdateAPIView):
+    """Вьюсет профиля пользователя"""
+
+    serializer_class = ProfileSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
