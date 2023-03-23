@@ -15,7 +15,7 @@ git clone https://github.com/genriber/api_yamdb.git
 ```
 
 ```
-cd yatube_api
+cd api_yamdb
 ```
 
 Cоздать и активировать виртуальное окружение:
