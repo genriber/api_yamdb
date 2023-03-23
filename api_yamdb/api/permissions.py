@@ -24,9 +24,11 @@ class IsAdminOrReadOnly(permissions.BasePermission):
 
 
 class AdminOnly(permissions.BasePermission):
+    """Премишен админа или суперпользователя"""
+
     def has_permission(self, request, view):
         if request.user.is_authenticated:
-            return request.user.role == "admin"
+            return request.user.role == "admin" or request.user.is_superuser
 
 
 class IsAdminOrModeratorOrReadOnly(permissions.BasePermission):

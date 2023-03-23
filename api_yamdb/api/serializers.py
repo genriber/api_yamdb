@@ -18,7 +18,8 @@ from reviews.models import (
 
 def validate_uniqe_user_data(data):
     queryset = User.objects.filter(
-        models.Q(email=data["email"]) | models.Q(username=data["username"])
+        models.Q(email=data.get("email", ""))
+        | models.Q(username=data.get("username"))
     )
     if queryset.exists():
         raise serializers.ValidationError(
@@ -49,7 +50,9 @@ class MyObtainTokenSerializer(serializers.ModelSerializer):
         }
         user = authenticate(**authenticate_kwargs)
         if user is None:
-            raise exceptions.ValidationError("Неверный пароль!")
+            raise exceptions.ValidationError(
+                "Код подтверждения не действителен!"
+            )
         refresh = RefreshToken.for_user(user)
         return {
             "access": str(refresh.access_token),
@@ -117,6 +120,27 @@ class AdminCreateSerializer(serializers.ModelSerializer):
         if validated_data.get("role") is None:
             validated_data["role"] = "user"
         return super().create(validated_data)
+
+    def validate(self, data):
+        validate_uniqe_user_data(data)
+
+        return super().validate(data)
+
+
+class ProfileSerializer(serializers.ModelSerializer):
+    """Сериалайзер профиля пользователя"""
+
+    class Meta:
+        fields = (
+            "email",
+            "username",
+            "first_name",
+            "last_name",
+            "bio",
+            "role",
+        )
+        read_only_fields = ("role",)
+        model = User
 
     def validate(self, data):
         validate_uniqe_user_data(data)
