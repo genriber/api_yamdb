@@ -24,14 +24,25 @@ MODEL_AND_FILE_TABLE = {
 }
 
 
+def check_exists_models(table):
+    for model, file in table.items():
+        if model.objects.exists():
+            print("Такие данные уже существуют")
+            continue
+
+
 class Command(BaseCommand):
+    """
+    Команда для переноса данных из csv-файлов в БД Django.
+
+    При старте осуществляет дополнительно простую проверку,
+    существуют ли такие модели данных в БД.
+    """
+
     help = "Import csv to models in Django db"
 
     def handle(self, *args, **kwargs):
-        # for model, file in MODEL_AND_FILE_TABLE.items():
-        # if model.objects.exists():
-        # print('Такие данные уже существуют')
-        # continue
+        check_exists_models(MODEL_AND_FILE_TABLE)
 
         for model, file in MODEL_AND_FILE_TABLE.items():
             file_location = f"{settings.BASE_DIR}/static/data/{file}"

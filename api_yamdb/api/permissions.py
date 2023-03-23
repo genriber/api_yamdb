@@ -2,6 +2,11 @@ from rest_framework import permissions
 
 
 class IsAdminOrReadOnly(permissions.BasePermission):
+    """
+    Права доступа для Админа.
+    Остальным данные доступны только для чтения.
+    """
+
     def has_permission(self, request, view):
         if request.user.is_superuser:
             return True
@@ -20,6 +25,11 @@ class AdminOnly(permissions.BasePermission):
 
 
 class IsAdOrModOrAuthorOrReadOnly(permissions.BasePermission):
+    """
+    Права доступа для Админа, Модератора или Автора.
+    Остальным данные доступны только для чтения.
+    """
+
     def has_permission(self, request, view):
         if request.user.is_superuser:
             return True

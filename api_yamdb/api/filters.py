@@ -4,7 +4,13 @@ from reviews.models import Title
 
 
 class TitleFilter(filters.FilterSet):
-    name = filters.CharFilter(field_name="name", lookup_expr="icontains")
+    """
+    Кастомный фильтр для Title.
+    Позволяет осуществлять поиск по полям.
+        В частности, по полю genre с параметром slug.
+    """
+
+    name = filters.CharFilter(field_name="name")
     year = filters.NumberFilter(field_name="year")
     genre = filters.CharFilter(field_name="genre__slug")
     category = filters.CharFilter(field_name="category__slug")
