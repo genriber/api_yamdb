@@ -26,7 +26,9 @@ from .serializers import (
 from .permissions import (
     IsAuthorOrReadOnly,
     IsAdminOrReadOnly,
+    AdminOnly,
     IsAdminOrModeratorOrReadOnly,
+    IsAdOrModOrAuthorOrReadOnly,
 )
 from .filters import TitleFilter
 
@@ -101,7 +103,7 @@ class UsersListView(generics.ListCreateAPIView, viewsets.GenericViewSet):
 
     # TO DO: AdminOnly
     permission_classes = [
-        AllowAny,
+        AdminOnly,
     ]
     serializer_class = AdminCreateSerializer
     queryset = User.objects.all()
@@ -181,6 +183,8 @@ class TitleViewSet(viewsets.ModelViewSet):
 class ReviewViewSet(viewsets.ModelViewSet):
     """Вьюсет отзывов."""
 
+    # permission_classes = [IsAdminOrModeratorOrReadOnly, IsAuthorOrReadOnly]
+    permission_classes = [IsAdOrModOrAuthorOrReadOnly]
     serializer_class = ReviewSerializer
     pagination_class = LimitOffsetPagination
 
@@ -197,6 +201,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
 class CommentViewSet(viewsets.ModelViewSet):
     """Вьюсет комментов."""
 
+    permission_classes = [IsAdOrModOrAuthorOrReadOnly]
     serializer_class = CommentSerializer
     pagination_class = LimitOffsetPagination
 

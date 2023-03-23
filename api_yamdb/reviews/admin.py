@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import User, Category, Genre, Title, Review, Comment
+from .models import User, Category, Genre, Title, Review, Comment, GenreTitle
 
 
 class CategoryAdmin(admin.ModelAdmin):
@@ -16,9 +16,16 @@ class GenreAdmin(admin.ModelAdmin):
     empty_value_display = "-пусто-"
 
 
+class GenreInline(admin.TabularInline):
+    model = GenreTitle
+    extra = 1
+
+
 class TitleAdmin(admin.ModelAdmin):
-    list_display = ("id", "category", "genre", "name", "year", "description")
+    inlines = [GenreInline]
+    list_display = ("id", "category", "name", "year", "description")
     search_fields = ("name",)
+    filter_horizontal = ("genre",)
     list_filter = ("name", "year", "category", "genre")
     empty_value_display = "-пусто-"
 
@@ -38,8 +45,8 @@ class CommentAdmin(admin.ModelAdmin):
 
 
 admin.site.register(User)
-admin.site.register(Category)
-admin.site.register(Genre)
-admin.site.register(Title)
-admin.site.register(Review)
-admin.site.register(Comment)
+admin.site.register(Category, CategoryAdmin)
+admin.site.register(Genre, GenreAdmin)
+admin.site.register(Title, TitleAdmin)
+admin.site.register(Review, ReviewAdmin)
+admin.site.register(Comment, CommentAdmin)

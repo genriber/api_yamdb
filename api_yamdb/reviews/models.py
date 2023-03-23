@@ -111,7 +111,9 @@ class Title(models.Model):
             ),
         ],
     )
-    genre = models.ManyToManyField(Genre, related_name="titles")
+    genre = models.ManyToManyField(
+        Genre, related_name="titles", through="GenreTitle"
+    )
     category = models.ForeignKey(
         Category,
         on_delete=models.SET_NULL,
@@ -179,7 +181,7 @@ class Review(models.Model):
         score_avg = Review.objects.filter(title=title).aggregate(
             models.Avg("score")
         )["score__avg"]
-        return round(score_avg) if score_avg else 0
+        return round(score_avg) if score_avg else None
 
 
 class Comment(models.Model):
