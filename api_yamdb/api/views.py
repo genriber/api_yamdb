@@ -3,8 +3,7 @@ import random
 
 from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
-from rest_framework import views, status, viewsets, filters, generics
-from rest_framework.decorators import action
+from rest_framework import views, status, viewsets, filters, generics, mixins
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.response import Response
@@ -128,7 +127,12 @@ class UserMeApiView(generics.RetrieveAPIView, generics.UpdateAPIView):
         return self.request.user
 
 
-class CategoryViewSet(viewsets.ModelViewSet):
+class CategoryViewSet(
+    mixins.ListModelMixin,
+    mixins.CreateModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet,
+):
     """
     Вьюсет категорий.
     Права доступа:
@@ -142,26 +146,15 @@ class CategoryViewSet(viewsets.ModelViewSet):
     pagination_class = LimitOffsetPagination
     filter_backends = [filters.SearchFilter]
     search_fields = ["name", "slug"]
-
-    @action(
-        detail=False,
-        methods=["delete"],
-        url_path=r"(?P<slug>[\w.]+)",
-    )
-    def get_category_for_delete(self, request, slug):
-        """
-        Декоратор action изменяет конечный url для delete-запросов.
-        Получение объекта Category по его slug для последующего удаления.
-        """
-
-        queryset = Category.objects.all()
-        category = get_object_or_404(queryset, slug=slug)
-        serializer = CategorySerializer(category)
-        category.delete()
-        return Response(serializer.data, status=status.HTTP_204_NO_CONTENT)
+    lookup_field = "slug"
 
 
-class GenreViewSet(viewsets.ModelViewSet):
+class GenreViewSet(
+    mixins.ListModelMixin,
+    mixins.CreateModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet,
+):
     """
     Вьюсет категорий.
     Права доступа:
@@ -175,23 +168,7 @@ class GenreViewSet(viewsets.ModelViewSet):
     pagination_class = LimitOffsetPagination
     filter_backends = [filters.SearchFilter]
     search_fields = ["name", "slug"]
-
-    @action(
-        detail=False,
-        methods=["delete"],
-        url_path=r"(?P<slug>[\w.]+)",
-    )
-    def get_genre_for_delete(self, request, slug):
-        """
-        Декоратор action изменяет конечный url для delete-запросов.
-        Получение объекта Genre по его slug для последующего удаления.
-        """
-
-        queryset = Genre.objects.all()
-        genre = get_object_or_404(queryset, slug=slug)
-        serializer = GenreSerializer(genre)
-        genre.delete()
-        return Response(serializer.data, status=status.HTTP_204_NO_CONTENT)
+    lookup_field = "slug"
 
 
 class TitleViewSet(viewsets.ModelViewSet):
@@ -206,6 +183,12 @@ class TitleViewSet(viewsets.ModelViewSet):
 
     permission_classes = [IsAdminOrReadOnly]
     serializer_class = TitleSerializer
+    http_method_names = [
+        "get",
+        "post",
+        "patch",
+        "delete",
+    ]
     queryset = Title.objects.all()
     pagination_class = LimitOffsetPagination
     filterset_class = TitleFilter
