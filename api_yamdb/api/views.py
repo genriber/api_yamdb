@@ -1,28 +1,35 @@
-import string
 import random
+import string
 
 from django.core.mail import send_mail
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
-from rest_framework import views, status, viewsets, filters, generics
-from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework.pagination import LimitOffsetPagination
-from rest_framework.response import Response
-from rest_framework.exceptions import ValidationError
 
-from reviews.models import Category, Genre, Title, Review, Comment
+from rest_framework import filters, generics, status, views, viewsets
+from rest_framework.exceptions import ValidationError
+from rest_framework.pagination import LimitOffsetPagination
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
+
+from reviews.models import Category, Comment, Genre, Review, Title, models
+from .filters import TitleFilter
+from .permissions import (
+    AdminOnly,
+    IsAdminOrReadOnly,
+    IsAdOrModOrAuthorOrReadOnly,
+)
 from .serializers import (
-    CommentSerializer,
-    SingUpSerializer,
-    User,
+    AdminCreateSerializer,
     CategorySerializer,
+    CommentSerializer,
     GenreSerializer,
+    MyObtainTokenSerializer,
+    ProfileSerializer,
+    ReviewSerializer,
+    SingUpSerializer,
     TitleSerializer,
     TitleReadOnlySerializer,
-    ReviewSerializer,
-    MyObtainTokenSerializer,
-    AdminCreateSerializer,
-    ProfileSerializer,
+    User,
 )
 from .permissions import (
     AdminOnly,
@@ -181,7 +188,9 @@ class TitleViewSet(viewsets.ModelViewSet):
         "patch",
         "delete",
     ]
-    queryset = Title.objects.all().annotate(Avg("reviews__score"))
+    queryset = Title.objects.all().annotate(
+        average_rating=models.Avg("reviews__score")
+    )
     pagination_class = LimitOffsetPagination
     filterset_class = TitleFilter
 
