@@ -214,15 +214,15 @@ class TitleSerializer(serializers.ModelSerializer):
     )
     rating = serializers.SerializerMethodField()
 
+    class Meta:
+        fields = "__all__"
+        model = Title
+
     def get_rating(self, obj):
         try:
             return round(obj.average_rating)
         except:
             return None
-
-    class Meta:
-        fields = "__all__"
-        model = Title
 
 
 class ReviewSerializer(serializers.ModelSerializer):
