@@ -1,17 +1,17 @@
 from django.contrib.auth import authenticate
 from django.contrib.auth.validators import UnicodeUsernameValidator
-from django.shortcuts import get_object_or_404
 from django.http import Http404
-from rest_framework import serializers, exceptions
+from django.shortcuts import get_object_or_404
+from rest_framework import exceptions, serializers
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from reviews.models import (
-    Comment,
-    User,
     Category,
+    Comment,
     Genre,
     Review,
     Title,
+    User,
     models,
 )
 
@@ -199,7 +199,10 @@ class TitleSerializer(serializers.ModelSerializer):
         model = Title
 
     def get_rating(self, obj):
-        return Review.get_mean_score(obj.pk)
+        try:
+            return round(obj.average_rating)
+        except:
+            return None
 
 
 class TitleReadOnlySerializer(serializers.ModelSerializer):
@@ -240,6 +243,14 @@ class ReviewSerializer(serializers.ModelSerializer):
         """
         title_id = self.context["view"].kwargs["title_id"]
         return get_object_or_404(Title, pk=title_id)
+
+    def validate_score(self, value):
+        if 1 <= value <= 10:
+            return value
+        else:
+            raise serializers.ValidationError(
+                f"Оценка может быть в диапазоне от 1 до 10"
+            )
 
     class Meta:
         fields = ("id", "text", "author", "score", "pub_date", "title")
