@@ -1,8 +1,7 @@
 from django.contrib.auth import authenticate
-from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.shortcuts import get_object_or_404
 from django.http import Http404
-from rest_framework import serializers, exceptions
+from rest_framework import serializers, exceptions, validators
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from reviews.models import (
@@ -12,22 +11,8 @@ from reviews.models import (
     Genre,
     Review,
     Title,
-    models,
 )
-
-
-def validate_uniqe_user_data(data):
-    """
-    Валидатор уникальности полей 'username' и 'email'
-    """
-    queryset = User.objects.filter(
-        models.Q(email=data.get("email", ""))
-        | models.Q(username=data.get("username"))
-    )
-    if queryset.exists():
-        raise serializers.ValidationError(
-            "Имя и email должны быть уникальными!"
-        )
+from .validators import UsernameValidator, check_unique_email_and_name
 
 
 class MyObtainTokenSerializer(serializers.ModelSerializer):
@@ -41,7 +26,11 @@ class MyObtainTokenSerializer(serializers.ModelSerializer):
         model = User
         fields = ("username", "confirmation_code")
         extra_kwargs = {
-            "username": {"validators": [UnicodeUsernameValidator()]},
+            "username": {
+                "validators": [
+                    UsernameValidator(),
+                ]
+            },
         }
 
     def validate(self, data):
@@ -71,31 +60,35 @@ class SingUpSerializer(serializers.ModelSerializer):
             "username",
         )
         extra_kwargs = {
-            "email": {"required": True},
+            "email": {
+                "required": True,
+            },
             "username": {
                 "required": True,
-                "validators": [UnicodeUsernameValidator()],
+                "validators": [
+                    UsernameValidator(),
+                ],
             },
         }
         model = User
 
-    def create(self, validated_data):
-        """Если пользователь уже создан взять существующего."""
-        return User.objects.get_or_create(**validated_data)
-
     def validate(self, data):
         """
         Валидация в 2 этапа:
-         1. Ищем пользователя в базе если находим валидация успешна.
-         2. Если пользователя нет проверяем что username и email уникальны.
+        1. Ищем пользователя в базе если находим валидация успешна.
+        2. Если пользователя нет проверяем что username и email уникальны.
         """
         try:
             get_object_or_404(
                 User, email=data["email"], username=data["username"]
             )
         except Http404:
-            validate_uniqe_user_data(data)
+            check_unique_email_and_name(data)
         return data
+
+    def create(self, validated_data):
+        """Если пользователь уже создан взять существующего."""
+        return User.objects.get_or_create(**validated_data)
 
 
 class AdminCreateSerializer(serializers.ModelSerializer):
@@ -111,10 +104,18 @@ class AdminCreateSerializer(serializers.ModelSerializer):
             "role",
         )
         extra_kwargs = {
-            "email": {"required": True},
+            "email": {
+                "required": True,
+                "validators": [
+                    validators.UniqueValidator(queryset=User.objects.all())
+                ],
+            },
             "username": {
                 "required": True,
-                "validators": [UnicodeUsernameValidator()],
+                "validators": [
+                    UsernameValidator(),
+                    validators.UniqueValidator(queryset=User.objects.all()),
+                ],
             },
         }
         model = User
@@ -127,14 +128,6 @@ class AdminCreateSerializer(serializers.ModelSerializer):
             validated_data["role"] = "user"
 
         return super().create(validated_data)
-
-    def validate(self, data):
-        """
-        Валидатор данных сериализатора.
-        """
-        validate_uniqe_user_data(data)
-
-        return super().validate(data)
 
 
 class ProfileSerializer(serializers.ModelSerializer):
@@ -150,12 +143,12 @@ class ProfileSerializer(serializers.ModelSerializer):
             "role",
         )
         read_only_fields = ("role",)
+        extra_kwargs = {
+            "username": {
+                "validators": [UsernameValidator()],
+            },
+        }
         model = User
-
-    def validate(self, data):
-        validate_uniqe_user_data(data)
-
-        return super().validate(data)
 
 
 class CategorySerializer(serializers.ModelSerializer):

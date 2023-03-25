@@ -114,6 +114,11 @@ EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
 
 EMAIL_FILE_PATH = BASE_DIR / "sent_emails"
 
+EMAIL_SUBJECT = "Yamdb registration"
+
+EMAIL_SENDER = "from@example.com"
+
+
 # Rest framework staff
 
 REST_FRAMEWORK = {

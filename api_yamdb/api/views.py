@@ -1,13 +1,12 @@
-import string
-import random
-
 from django.core.mail import send_mail
+from django.conf import settings
 from django.shortcuts import get_object_or_404
+from django.contrib.auth.tokens import default_token_generator
 from rest_framework import views, status, viewsets, filters, generics, mixins
+from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.response import Response
-from rest_framework.exceptions import ValidationError
 
 from reviews.models import Category, Genre, Title, Review, Comment
 from .serializers import (
@@ -61,30 +60,21 @@ class SingUpView(views.APIView):
         AllowAny,
     ]
 
-    def genereate_confirmation_code(self):
-        """Генерация сучайного confirmation_code"""
-        length = 6
-        code = "".join(random.choices(string.ascii_letters, k=length))
-        return code
-
     def post(self, request, format=None):
         """Обработка POST запроса"""
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid(raise_exception=True):
             email = serializer.data.get("email")
             username = serializer.data.get("username")
-            if username == "me":
-                raise ValidationError("Недопустимое имя!")
-            password = self.genereate_confirmation_code()
-            send_mail(
-                "Yamdb registration",
-                f"confirmation_code : {password}",
-                "from@example.com",
-                (f"{email}",),
-                fail_silently=False,
-            )
             user, _ = User.objects.update_or_create(
                 email=email, username=username
+            )
+            password = default_token_generator.make_token(user)
+            send_mail(
+                settings.EMAIL_SUBJECT,
+                f"confirmation_code : {password}",
+                settings.EMAIL_SENDER,
+                (f"{email}",),
             )
             user.set_password(password)
             user.save()
@@ -115,16 +105,24 @@ class UsersListViewSet(viewsets.ModelViewSet):
     search_fields = ("username",)
     pagination_class = LimitOffsetPagination
 
-
-class UserMeApiView(generics.RetrieveAPIView, generics.UpdateAPIView):
-    """Вьюсет профиля пользователя"""
-
-    serializer_class = ProfileSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_object(self):
-        """Получения объекта из запроса"""
-        return self.request.user
+    @action(
+        detail=False,
+        methods=["PATCH", "GET"],
+        url_path="me",
+        permission_classes=[
+            IsAuthenticated,
+        ],
+    )
+    def me(self, request):
+        if request.method == "GET":
+            return Response(ProfileSerializer(self.request.user).data)
+        elif request.method == "PATCH":
+            serializer = ProfileSerializer(
+                self.request.user, data=request.data, partial=True
+            )
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data)
 
 
 class CategoryViewSet(

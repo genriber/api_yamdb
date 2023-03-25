@@ -1,5 +1,6 @@
 from datetime import date
 
+from django.core.exceptions import ValidationError
 from django.core.validators import (
     MaxValueValidator,
     MinValueValidator,
@@ -42,6 +43,19 @@ class User(AbstractUser):
 
     def __str__(self) -> str:
         return f"Пользователь {self.username} - {self.role}"
+
+    def clean(self) -> None:
+        if self.username == "me":
+            raise ValidationError(f"Недопустимое имя: {self.username}")
+        return super().clean()
+
+    @property
+    def is_moderator(self):
+        return self.role == "moderator"
+
+    @property
+    def is_admin(self):
+        return self.role == "admin"
 
 
 class Category(models.Model):
