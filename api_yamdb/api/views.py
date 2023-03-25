@@ -2,8 +2,10 @@ import random
 import string
 
 from django.core.mail import send_mail
+from django.db.models import Avg
 from django.shortcuts import get_object_or_404
-from rest_framework import filters, generics, mixins, status, views, viewsets
+
+from rest_framework import filters, generics, status, views, viewsets
 from rest_framework.exceptions import ValidationError
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -26,8 +28,17 @@ from .serializers import (
     ReviewSerializer,
     SingUpSerializer,
     TitleSerializer,
+    TitleReadOnlySerializer,
     User,
 )
+from .permissions import (
+    AdminOnly,
+    IsAdminOrReadOnly,
+    AdminOnly,
+    IsAdOrModOrAuthorOrReadOnly,
+)
+from .filters import TitleFilter
+from .mixins import ListRetrieveCreateDestroyViewSet
 
 
 class ObtainTokenView(views.APIView):
@@ -126,12 +137,7 @@ class UserMeApiView(generics.RetrieveAPIView, generics.UpdateAPIView):
         return self.request.user
 
 
-class CategoryViewSet(
-    mixins.ListModelMixin,
-    mixins.CreateModelMixin,
-    mixins.DestroyModelMixin,
-    viewsets.GenericViewSet,
-):
+class CategoryViewSet(ListRetrieveCreateDestroyViewSet):
     """
     Вьюсет категорий.
     Права доступа:
@@ -148,12 +154,7 @@ class CategoryViewSet(
     lookup_field = "slug"
 
 
-class GenreViewSet(
-    mixins.ListModelMixin,
-    mixins.CreateModelMixin,
-    mixins.DestroyModelMixin,
-    viewsets.GenericViewSet,
-):
+class GenreViewSet(ListRetrieveCreateDestroyViewSet):
     """
     Вьюсет категорий.
     Права доступа:
@@ -181,7 +182,6 @@ class TitleViewSet(viewsets.ModelViewSet):
     """
 
     permission_classes = [IsAdminOrReadOnly]
-    serializer_class = TitleSerializer
     http_method_names = [
         "get",
         "post",
@@ -193,6 +193,11 @@ class TitleViewSet(viewsets.ModelViewSet):
     )
     pagination_class = LimitOffsetPagination
     filterset_class = TitleFilter
+
+    def get_serializer_class(self):
+        if self.request.method == "GET":
+            return TitleReadOnlySerializer
+        return TitleSerializer
 
 
 class ReviewViewSet(viewsets.ModelViewSet):

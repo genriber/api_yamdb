@@ -180,37 +180,17 @@ class GenreSerializer(serializers.ModelSerializer):
         model = Genre
 
 
-class TitleCategory(serializers.SlugRelatedField):
-    """
-    Возвращает сериализованные данные поля category.
-    """
-
-    def to_representation(self, value):
-        serializer = CategorySerializer(value)
-        return serializer.data
-
-
-class TitleGenre(serializers.SlugRelatedField):
-    """
-    Возвращает сериализованные данные поля genre.
-    """
-
-    def to_representation(self, value):
-        serializer = GenreSerializer(value)
-        return serializer.data
-
-
 class TitleSerializer(serializers.ModelSerializer):
     """
     Сериализатор произведений.
     """
 
-    category = TitleCategory(
-        slug_field="slug",
+    category = serializers.SlugRelatedField(
         queryset=Category.objects.all(),
+        slug_field="slug",
     )
-    genre = TitleGenre(
-        slug_field="slug", queryset=Genre.objects.all(), many=True
+    genre = serializers.SlugRelatedField(
+        queryset=Genre.objects.all(), slug_field="slug", many=True
     )
     rating = serializers.SerializerMethodField()
 
@@ -223,6 +203,23 @@ class TitleSerializer(serializers.ModelSerializer):
             return round(obj.average_rating)
         except:
             return None
+
+
+class TitleReadOnlySerializer(serializers.ModelSerializer):
+    """
+    Сериализатор произведений для Get запросов.
+    """
+
+    category = CategorySerializer(read_only=True)
+    genre = GenreSerializer(read_only=True, many=True)
+    rating = serializers.SerializerMethodField()
+
+    class Meta:
+        fields = "__all__"
+        model = Title
+
+    def get_rating(self, obj):
+        return Review.get_mean_score(obj.pk)
 
 
 class ReviewSerializer(serializers.ModelSerializer):
@@ -240,7 +237,10 @@ class ReviewSerializer(serializers.ModelSerializer):
     title = serializers.HiddenField(default=None)
 
     def validate_title(self, value):
-        """Получаем доступ к переданному в url title_id для дальнейшей валидации."""
+        """
+        Получаем доступ к переданному в url title_id
+        для дальнейшей валидации.
+        """
         title_id = self.context["view"].kwargs["title_id"]
         return get_object_or_404(Title, pk=title_id)
 
