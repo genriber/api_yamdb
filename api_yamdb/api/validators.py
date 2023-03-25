@@ -6,9 +6,6 @@ from .serializers import serializers
 
 
 class UsernameValidator(UnicodeUsernameValidator):
-    def __init__(self):
-        return super().__init__()
-
     def __call__(self, value) -> None:
         if value == "me":
             raise ValidationError(f"Недопустимое имя: {value}")

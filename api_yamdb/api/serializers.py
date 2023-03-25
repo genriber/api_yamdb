@@ -1,5 +1,3 @@
-import decimal
-
 from django.contrib.auth import authenticate
 from django.http import Http404
 from django.shortcuts import get_object_or_404

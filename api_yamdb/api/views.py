@@ -1,3 +1,4 @@
+from django.db.models.functions import Round
 from django.core.mail import send_mail
 from django.conf import settings
 from django.shortcuts import get_object_or_404
@@ -192,7 +193,7 @@ class TitleViewSet(viewsets.ModelViewSet):
         "delete",
     ]
     queryset = Title.objects.all().annotate(
-        rating=models.Avg("reviews__score")
+        rating=Round(models.Avg("reviews__score"))
     )
     pagination_class = LimitOffsetPagination
     filterset_class = TitleFilter
