@@ -9,7 +9,6 @@ from .views import (
     ReviewViewSet,
     SingUpView,
     TitleViewSet,
-    UserMeApiView,
     UsersListViewSet,
 )
 
@@ -39,6 +38,5 @@ urlpatterns = [
         ObtainTokenView.as_view(),
         name="token_obtain_access",
     ),
-    path("v1/users/me/", UserMeApiView.as_view(), name="profile"),
     path("v1/", include(router.urls)),
 ]
