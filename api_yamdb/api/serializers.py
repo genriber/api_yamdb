@@ -1,33 +1,18 @@
 from django.contrib.auth import authenticate
-from django.contrib.auth.validators import UnicodeUsernameValidator
-from django.shortcuts import get_object_or_404
 from django.http import Http404
-from rest_framework import serializers, exceptions
+from django.shortcuts import get_object_or_404
+from rest_framework import exceptions, validators, serializers
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from reviews.models import (
-    Comment,
-    User,
     Category,
+    Comment,
     Genre,
     Review,
     Title,
-    models,
+    User,
 )
-
-
-def validate_uniqe_user_data(data):
-    """
-    Валидатор уникальности полей 'username' и 'email'
-    """
-    queryset = User.objects.filter(
-        models.Q(email=data.get("email", ""))
-        | models.Q(username=data.get("username"))
-    )
-    if queryset.exists():
-        raise serializers.ValidationError(
-            "Имя и email должны быть уникальными!"
-        )
+from .validators import UsernameValidator, check_unique_email_and_name
 
 
 class MyObtainTokenSerializer(serializers.ModelSerializer):
@@ -41,7 +26,11 @@ class MyObtainTokenSerializer(serializers.ModelSerializer):
         model = User
         fields = ("username", "confirmation_code")
         extra_kwargs = {
-            "username": {"validators": [UnicodeUsernameValidator()]},
+            "username": {
+                "validators": [
+                    UsernameValidator(),
+                ]
+            },
         }
 
     def validate(self, data):
@@ -71,31 +60,35 @@ class SingUpSerializer(serializers.ModelSerializer):
             "username",
         )
         extra_kwargs = {
-            "email": {"required": True},
+            "email": {
+                "required": True,
+            },
             "username": {
                 "required": True,
-                "validators": [UnicodeUsernameValidator()],
+                "validators": [
+                    UsernameValidator(),
+                ],
             },
         }
         model = User
 
-    def create(self, validated_data):
-        """Если пользователь уже создан взять существующего."""
-        return User.objects.get_or_create(**validated_data)
-
     def validate(self, data):
         """
         Валидация в 2 этапа:
-         1. Ищем пользователя в базе если находим валидация успешна.
-         2. Если пользователя нет проверяем что username и email уникальны.
+        1. Ищем пользователя в базе если находим валидация успешна.
+        2. Если пользователя нет проверяем что username и email уникальны.
         """
         try:
             get_object_or_404(
                 User, email=data["email"], username=data["username"]
             )
         except Http404:
-            validate_uniqe_user_data(data)
+            check_unique_email_and_name(data)
         return data
+
+    def create(self, validated_data):
+        """Если пользователь уже создан взять существующего."""
+        return User.objects.get_or_create(**validated_data)
 
 
 class AdminCreateSerializer(serializers.ModelSerializer):
@@ -111,10 +104,18 @@ class AdminCreateSerializer(serializers.ModelSerializer):
             "role",
         )
         extra_kwargs = {
-            "email": {"required": True},
+            "email": {
+                "required": True,
+                "validators": [
+                    validators.UniqueValidator(queryset=User.objects.all())
+                ],
+            },
             "username": {
                 "required": True,
-                "validators": [UnicodeUsernameValidator()],
+                "validators": [
+                    UsernameValidator(),
+                    validators.UniqueValidator(queryset=User.objects.all()),
+                ],
             },
         }
         model = User
@@ -127,14 +128,6 @@ class AdminCreateSerializer(serializers.ModelSerializer):
             validated_data["role"] = "user"
 
         return super().create(validated_data)
-
-    def validate(self, data):
-        """
-        Валидатор данных сериализатора.
-        """
-        validate_uniqe_user_data(data)
-
-        return super().validate(data)
 
 
 class ProfileSerializer(serializers.ModelSerializer):
@@ -150,12 +143,12 @@ class ProfileSerializer(serializers.ModelSerializer):
             "role",
         )
         read_only_fields = ("role",)
+        extra_kwargs = {
+            "username": {
+                "validators": [UsernameValidator()],
+            },
+        }
         model = User
-
-    def validate(self, data):
-        validate_uniqe_user_data(data)
-
-        return super().validate(data)
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -180,46 +173,37 @@ class GenreSerializer(serializers.ModelSerializer):
         model = Genre
 
 
-class TitleCategory(serializers.SlugRelatedField):
-    """
-    Возвращает сериализованные данные поля category.
-    """
-
-    def to_representation(self, value):
-        serializer = CategorySerializer(value)
-        return serializer.data
-
-
-class TitleGenre(serializers.SlugRelatedField):
-    """
-    Возвращает сериализованные данные поля genre.
-    """
-
-    def to_representation(self, value):
-        serializer = GenreSerializer(value)
-        return serializer.data
-
-
 class TitleSerializer(serializers.ModelSerializer):
     """
     Сериализатор произведений.
     """
 
-    category = TitleCategory(
-        slug_field="slug",
+    category = serializers.SlugRelatedField(
         queryset=Category.objects.all(),
+        slug_field="slug",
     )
-    genre = TitleGenre(
-        slug_field="slug", queryset=Genre.objects.all(), many=True
+    genre = serializers.SlugRelatedField(
+        queryset=Genre.objects.all(), slug_field="slug", many=True
     )
-    rating = serializers.SerializerMethodField()
+    rating = serializers.IntegerField(required=False)
 
     class Meta:
         fields = "__all__"
         model = Title
 
-    def get_rating(self, obj):
-        return Review.get_mean_score(obj.pk)
+
+class TitleReadOnlySerializer(serializers.ModelSerializer):
+    """
+    Сериализатор произведений для Get запросов.
+    """
+
+    category = CategorySerializer(read_only=True)
+    genre = GenreSerializer(read_only=True, many=True)
+    rating = serializers.IntegerField(required=False, read_only=True)
+
+    class Meta:
+        fields = "__all__"
+        model = Title
 
 
 class ReviewSerializer(serializers.ModelSerializer):
@@ -243,6 +227,14 @@ class ReviewSerializer(serializers.ModelSerializer):
         """
         title_id = self.context["view"].kwargs["title_id"]
         return get_object_or_404(Title, pk=title_id)
+
+    def validate_score(self, value):
+        if 1 <= value <= 10:
+            return value
+        else:
+            raise serializers.ValidationError(
+                "Оценка может быть в диапазоне от 1 до 10"
+            )
 
     class Meta:
         fields = ("id", "text", "author", "score", "pub_date", "title")

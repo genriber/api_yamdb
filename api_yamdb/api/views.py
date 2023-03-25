@@ -1,26 +1,40 @@
-import string
-import random
-
+from django.db.models.functions import Round
 from django.core.mail import send_mail
+from django.conf import settings
 from django.shortcuts import get_object_or_404
-from rest_framework import views, status, viewsets, filters, generics, mixins
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from django.contrib.auth.tokens import default_token_generator
+from rest_framework import filters, status, views, viewsets
+from rest_framework.decorators import action
 from rest_framework.pagination import LimitOffsetPagination
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.exceptions import ValidationError
 
-from reviews.models import Category, Genre, Title, Review, Comment
-from .serializers import (
-    CommentSerializer,
-    SingUpSerializer,
+from reviews.models import (
+    Category,
+    Comment,
+    Genre,
+    Review,
+    Title,
     User,
-    CategorySerializer,
-    GenreSerializer,
-    TitleSerializer,
-    ReviewSerializer,
-    MyObtainTokenSerializer,
+    models,
+)
+from .filters import TitleFilter
+from .permissions import (
+    AdminOnly,
+    IsAdminOrReadOnly,
+    IsAdOrModOrAuthorOrReadOnly,
+)
+from .serializers import (
     AdminCreateSerializer,
+    CategorySerializer,
+    CommentSerializer,
+    GenreSerializer,
+    MyObtainTokenSerializer,
     ProfileSerializer,
+    ReviewSerializer,
+    SingUpSerializer,
+    TitleSerializer,
+    TitleReadOnlySerializer,
 )
 from .permissions import (
     AdminOnly,
@@ -29,6 +43,7 @@ from .permissions import (
     IsAdOrModOrAuthorOrReadOnly,
 )
 from .filters import TitleFilter
+from .mixins import ListRetrieveCreateDestroyViewSet
 
 
 class ObtainTokenView(views.APIView):
@@ -61,30 +76,21 @@ class SingUpView(views.APIView):
         AllowAny,
     ]
 
-    def genereate_confirmation_code(self):
-        """Генерация сучайного confirmation_code"""
-        length = 6
-        code = "".join(random.choices(string.ascii_letters, k=length))
-        return code
-
     def post(self, request, format=None):
         """Обработка POST запроса"""
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid(raise_exception=True):
             email = serializer.data.get("email")
             username = serializer.data.get("username")
-            if username == "me":
-                raise ValidationError("Недопустимое имя!")
-            password = self.genereate_confirmation_code()
-            send_mail(
-                "Yamdb registration",
-                f"confirmation_code : {password}",
-                "from@example.com",
-                (f"{email}",),
-                fail_silently=False,
-            )
             user, _ = User.objects.update_or_create(
                 email=email, username=username
+            )
+            password = default_token_generator.make_token(user)
+            send_mail(
+                settings.EMAIL_SUBJECT,
+                f"confirmation_code : {password}",
+                settings.EMAIL_SENDER,
+                (f"{email}",),
             )
             user.set_password(password)
             user.save()
@@ -115,24 +121,27 @@ class UsersListViewSet(viewsets.ModelViewSet):
     search_fields = ("username",)
     pagination_class = LimitOffsetPagination
 
+    @action(
+        detail=False,
+        methods=["PATCH", "GET"],
+        url_path="me",
+        permission_classes=[
+            IsAuthenticated,
+        ],
+    )
+    def me(self, request):
+        if request.method == "GET":
+            return Response(ProfileSerializer(self.request.user).data)
+        elif request.method == "PATCH":
+            serializer = ProfileSerializer(
+                self.request.user, data=request.data, partial=True
+            )
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data)
 
-class UserMeApiView(generics.RetrieveAPIView, generics.UpdateAPIView):
-    """Вьюсет профиля пользователя"""
 
-    serializer_class = ProfileSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_object(self):
-        """Получения объекта из запроса"""
-        return self.request.user
-
-
-class CategoryViewSet(
-    mixins.ListModelMixin,
-    mixins.CreateModelMixin,
-    mixins.DestroyModelMixin,
-    viewsets.GenericViewSet,
-):
+class CategoryViewSet(ListRetrieveCreateDestroyViewSet):
     """
     Вьюсет категорий.
     Права доступа:
@@ -149,12 +158,7 @@ class CategoryViewSet(
     lookup_field = "slug"
 
 
-class GenreViewSet(
-    mixins.ListModelMixin,
-    mixins.CreateModelMixin,
-    mixins.DestroyModelMixin,
-    viewsets.GenericViewSet,
-):
+class GenreViewSet(ListRetrieveCreateDestroyViewSet):
     """
     Вьюсет категорий.
     Права доступа:
@@ -182,16 +186,22 @@ class TitleViewSet(viewsets.ModelViewSet):
     """
 
     permission_classes = [IsAdminOrReadOnly]
-    serializer_class = TitleSerializer
     http_method_names = [
         "get",
         "post",
         "patch",
         "delete",
     ]
-    queryset = Title.objects.all()
+    queryset = Title.objects.all().annotate(
+        rating=Round(models.Avg("reviews__score"))
+    )
     pagination_class = LimitOffsetPagination
     filterset_class = TitleFilter
+
+    def get_serializer_class(self):
+        if self.request.method == "GET":
+            return TitleReadOnlySerializer
+        return TitleSerializer
 
 
 class ReviewViewSet(viewsets.ModelViewSet):

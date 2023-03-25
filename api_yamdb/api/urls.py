@@ -2,15 +2,14 @@ from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
 from .views import (
-    SingUpView,
     CategoryViewSet,
     CommentViewSet,
     GenreViewSet,
-    ReviewViewSet,
-    TitleViewSet,
     ObtainTokenView,
+    ReviewViewSet,
+    SingUpView,
+    TitleViewSet,
     UsersListViewSet,
-    UserMeApiView,
 )
 
 app_name = "api"
@@ -39,6 +38,5 @@ urlpatterns = [
         ObtainTokenView.as_view(),
         name="token_obtain_access",
     ),
-    path("v1/users/me/", UserMeApiView.as_view(), name="profile"),
     path("v1/", include(router.urls)),
 ]
