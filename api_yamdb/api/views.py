@@ -192,7 +192,7 @@ class TitleViewSet(viewsets.ModelViewSet):
         "delete",
     ]
     queryset = Title.objects.all().annotate(
-        average_rating=models.Avg("reviews__score")
+        rating=models.Avg("reviews__score")
     )
     pagination_class = LimitOffsetPagination
     filterset_class = TitleFilter

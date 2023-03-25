@@ -1,3 +1,5 @@
+import decimal
+
 from django.contrib.auth import authenticate
 from django.http import Http404
 from django.shortcuts import get_object_or_404
@@ -185,17 +187,11 @@ class TitleSerializer(serializers.ModelSerializer):
     genre = serializers.SlugRelatedField(
         queryset=Genre.objects.all(), slug_field="slug", many=True
     )
-    rating = serializers.SerializerMethodField()
+    rating = serializers.IntegerField(required=False)
 
     class Meta:
         fields = "__all__"
         model = Title
-
-    def get_rating(self, obj):
-        try:
-            return round(obj.average_rating)
-        except Exception:
-            return None
 
 
 class TitleReadOnlySerializer(serializers.ModelSerializer):
@@ -205,17 +201,11 @@ class TitleReadOnlySerializer(serializers.ModelSerializer):
 
     category = CategorySerializer(read_only=True)
     genre = GenreSerializer(read_only=True, many=True)
-    rating = serializers.SerializerMethodField()
+    rating = serializers.IntegerField(required=False, read_only=True)
 
     class Meta:
         fields = "__all__"
         model = Title
-
-    def get_rating(self, obj):
-        try:
-            return round(obj.average_rating)
-        except Exception:
-            return None
 
 
 class ReviewSerializer(serializers.ModelSerializer):
