@@ -1,13 +1,12 @@
 from datetime import date
 
 from django.core.exceptions import ValidationError
+from django.contrib.auth.models import AbstractUser
 from django.core.validators import (
     MaxValueValidator,
     MinValueValidator,
     validate_slug,
 )
-from django.shortcuts import get_object_or_404
-from django.contrib.auth.models import AbstractUser
 from django.db import models
 
 USER_ROLE_CHOISES = (
@@ -168,7 +167,7 @@ class Review(models.Model):
         related_name="reviews",
     )
     text = models.TextField(verbose_name="Текст отзыва", null=False)
-    score = models.IntegerField(
+    score = models.SmallIntegerField(
         verbose_name="Оценка автора отзыва",
         validators=[MinValueValidator(1), MaxValueValidator(10)],
     )
@@ -189,13 +188,6 @@ class Review(models.Model):
         return (
             f"Отзыв {self.author.username} на произведение {self.title.name}"
         )
-
-    def get_mean_score(title_id):
-        title = get_object_or_404(Title, pk=title_id)
-        score_avg = Review.objects.filter(title=title).aggregate(
-            models.Avg("score")
-        )["score__avg"]
-        return round(score_avg) if score_avg else None
 
 
 class Comment(models.Model):

@@ -2,24 +2,38 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.tokens import default_token_generator
-from rest_framework import views, status, viewsets, filters, generics, mixins
+from rest_framework import filters, status, views, viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.pagination import LimitOffsetPagination
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
-from reviews.models import Category, Genre, Title, Review, Comment
-from .serializers import (
-    CommentSerializer,
-    SingUpSerializer,
+from reviews.models import (
+    Category,
+    Comment,
+    Genre,
+    Review,
+    Title,
     User,
-    CategorySerializer,
-    GenreSerializer,
-    TitleSerializer,
-    ReviewSerializer,
-    MyObtainTokenSerializer,
+    models,
+)
+from .filters import TitleFilter
+from .permissions import (
+    AdminOnly,
+    IsAdminOrReadOnly,
+    IsAdOrModOrAuthorOrReadOnly,
+)
+from .serializers import (
     AdminCreateSerializer,
+    CategorySerializer,
+    CommentSerializer,
+    GenreSerializer,
+    MyObtainTokenSerializer,
     ProfileSerializer,
+    ReviewSerializer,
+    SingUpSerializer,
+    TitleSerializer,
+    TitleReadOnlySerializer,
 )
 from .permissions import (
     AdminOnly,
@@ -28,6 +42,7 @@ from .permissions import (
     IsAdOrModOrAuthorOrReadOnly,
 )
 from .filters import TitleFilter
+from .mixins import ListRetrieveCreateDestroyViewSet
 
 
 class ObtainTokenView(views.APIView):
@@ -125,12 +140,7 @@ class UsersListViewSet(viewsets.ModelViewSet):
             return Response(serializer.data)
 
 
-class CategoryViewSet(
-    mixins.ListModelMixin,
-    mixins.CreateModelMixin,
-    mixins.DestroyModelMixin,
-    viewsets.GenericViewSet,
-):
+class CategoryViewSet(ListRetrieveCreateDestroyViewSet):
     """
     Вьюсет категорий.
     Права доступа:
@@ -147,12 +157,7 @@ class CategoryViewSet(
     lookup_field = "slug"
 
 
-class GenreViewSet(
-    mixins.ListModelMixin,
-    mixins.CreateModelMixin,
-    mixins.DestroyModelMixin,
-    viewsets.GenericViewSet,
-):
+class GenreViewSet(ListRetrieveCreateDestroyViewSet):
     """
     Вьюсет категорий.
     Права доступа:
@@ -180,16 +185,22 @@ class TitleViewSet(viewsets.ModelViewSet):
     """
 
     permission_classes = [IsAdminOrReadOnly]
-    serializer_class = TitleSerializer
     http_method_names = [
         "get",
         "post",
         "patch",
         "delete",
     ]
-    queryset = Title.objects.all()
+    queryset = Title.objects.all().annotate(
+        average_rating=models.Avg("reviews__score")
+    )
     pagination_class = LimitOffsetPagination
     filterset_class = TitleFilter
+
+    def get_serializer_class(self):
+        if self.request.method == "GET":
+            return TitleReadOnlySerializer
+        return TitleSerializer
 
 
 class ReviewViewSet(viewsets.ModelViewSet):

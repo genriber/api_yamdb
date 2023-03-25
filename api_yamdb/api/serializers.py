@@ -1,16 +1,16 @@
 from django.contrib.auth import authenticate
-from django.shortcuts import get_object_or_404
 from django.http import Http404
-from rest_framework import serializers, exceptions, validators
+from django.shortcuts import get_object_or_404
+from rest_framework import exceptions, validators, serializers
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from reviews.models import (
-    Comment,
-    User,
     Category,
+    Comment,
     Genre,
     Review,
     Title,
+    User,
 )
 from .validators import UsernameValidator, check_unique_email_and_name
 
@@ -173,38 +173,38 @@ class GenreSerializer(serializers.ModelSerializer):
         model = Genre
 
 
-class TitleCategory(serializers.SlugRelatedField):
-    """
-    Возвращает сериализованные данные поля category.
-    """
-
-    def to_representation(self, value):
-        serializer = CategorySerializer(value)
-        return serializer.data
-
-
-class TitleGenre(serializers.SlugRelatedField):
-    """
-    Возвращает сериализованные данные поля genre.
-    """
-
-    def to_representation(self, value):
-        serializer = GenreSerializer(value)
-        return serializer.data
-
-
 class TitleSerializer(serializers.ModelSerializer):
     """
     Сериализатор произведений.
     """
 
-    category = TitleCategory(
-        slug_field="slug",
+    category = serializers.SlugRelatedField(
         queryset=Category.objects.all(),
+        slug_field="slug",
     )
-    genre = TitleGenre(
-        slug_field="slug", queryset=Genre.objects.all(), many=True
+    genre = serializers.SlugRelatedField(
+        queryset=Genre.objects.all(), slug_field="slug", many=True
     )
+    rating = serializers.SerializerMethodField()
+
+    class Meta:
+        fields = "__all__"
+        model = Title
+
+    def get_rating(self, obj):
+        try:
+            return round(obj.average_rating)
+        except Exception:
+            return None
+
+
+class TitleReadOnlySerializer(serializers.ModelSerializer):
+    """
+    Сериализатор произведений для Get запросов.
+    """
+
+    category = CategorySerializer(read_only=True)
+    genre = GenreSerializer(read_only=True, many=True)
     rating = serializers.SerializerMethodField()
 
     class Meta:
@@ -236,6 +236,14 @@ class ReviewSerializer(serializers.ModelSerializer):
         """
         title_id = self.context["view"].kwargs["title_id"]
         return get_object_or_404(Title, pk=title_id)
+
+    def validate_score(self, value):
+        if 1 <= value <= 10:
+            return value
+        else:
+            raise serializers.ValidationError(
+                "Оценка может быть в диапазоне от 1 до 10"
+            )
 
     class Meta:
         fields = ("id", "text", "author", "score", "pub_date", "title")
