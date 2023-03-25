@@ -82,7 +82,7 @@ class SingUpView(views.APIView):
         if serializer.is_valid(raise_exception=True):
             email = serializer.data.get("email")
             username = serializer.data.get("username")
-            user, _ = User.objects.update_or_create(
+            user, _ = User.objects.get_or_create(
                 email=email, username=username
             )
             password = default_token_generator.make_token(user)
