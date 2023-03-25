@@ -212,7 +212,10 @@ class TitleReadOnlySerializer(serializers.ModelSerializer):
         model = Title
 
     def get_rating(self, obj):
-        return Review.get_mean_score(obj.pk)
+        try:
+            return round(obj.average_rating)
+        except Exception:
+            return None
 
 
 class ReviewSerializer(serializers.ModelSerializer):
