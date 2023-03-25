@@ -31,7 +31,7 @@ from .permissions import (
     IsAdOrModOrAuthorOrReadOnly,
 )
 from .filters import TitleFilter
-from .mixins import RestrictedActionsViewSet
+from .mixins import ListRetrieveCreateDestroyViewSet
 
 
 class ObtainTokenView(views.APIView):
@@ -130,7 +130,7 @@ class UserMeApiView(generics.RetrieveAPIView, generics.UpdateAPIView):
         return self.request.user
 
 
-class CategoryViewSet(RestrictedActionsViewSet):
+class CategoryViewSet(ListRetrieveCreateDestroyViewSet):
     """
     Вьюсет категорий.
     Права доступа:
@@ -147,7 +147,7 @@ class CategoryViewSet(RestrictedActionsViewSet):
     lookup_field = "slug"
 
 
-class GenreViewSet(RestrictedActionsViewSet):
+class GenreViewSet(ListRetrieveCreateDestroyViewSet):
     """
     Вьюсет категорий.
     Права доступа:

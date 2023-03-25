@@ -1,7 +1,7 @@
 from rest_framework import viewsets, mixins
 
 
-class RestrictedActionsViewSet(
+class ListRetrieveCreateDestroyViewSet(
     mixins.ListModelMixin,
     mixins.CreateModelMixin,
     mixins.DestroyModelMixin,
