@@ -50,11 +50,11 @@ class User(AbstractUser):
 
     @property
     def is_moderator(self):
-        return self.role == "moderator"
+        return self.role == USER_ROLE_CHOISES[1][0]
 
     @property
     def is_admin(self):
-        return self.role == "admin"
+        return self.role == USER_ROLE_CHOISES[2][0]
 
 
 class Category(models.Model):
