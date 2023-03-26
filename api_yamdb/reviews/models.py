@@ -8,8 +8,9 @@ from django.core.validators import (
     validate_slug,
 )
 from django.db import models
+from model_utils import Choices
 
-USER_ROLE_CHOISES = (
+USER_ROLE_CHOISES = Choices(
     ("user", "Авторизованный пользователь"),
     ("moderator", "Модератор"),
     ("admin", "Администратор"),
@@ -50,11 +51,11 @@ class User(AbstractUser):
 
     @property
     def is_moderator(self):
-        return self.role == USER_ROLE_CHOISES[1][0]
+        return self.role == USER_ROLE_CHOISES.moderator
 
     @property
     def is_admin(self):
-        return self.role == USER_ROLE_CHOISES[2][0]
+        return self.role == USER_ROLE_CHOISES.admin
 
 
 class Category(models.Model):

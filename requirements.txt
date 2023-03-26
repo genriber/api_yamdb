@@ -47,9 +47,12 @@ django==3.2
     # via
     #   -r requirements.in
     #   django-filter
+    #   django-model-utils
     #   djangorestframework
     #   djangorestframework-simplejwt
 django-filter==22.1
+    # via -r requirements.in
+django-model-utils==4.3.1
     # via -r requirements.in
 djangorestframework==3.12.4
     # via
@@ -75,8 +78,6 @@ iniconfig==2.0.0
     # via
     #   -r requirements.in
     #   pytest
-isort==5.12.0
-    # via -r requirements.in
 mccabe==0.7.0
     # via
     #   -r requirements.in
